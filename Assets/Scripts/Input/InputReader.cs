@@ -11,6 +11,7 @@ public class InputReader : ScriptableObject, IPlayerActions
 {
     public event Action<Vector2> MoveEvent;
     public event Action<bool> PrimaryFireEvent;
+    public event Action<bool> SprintEvent;
 
     private Control controls;
 
@@ -41,7 +42,14 @@ public class InputReader : ScriptableObject, IPlayerActions
 
     public void OnSprint(InputAction.CallbackContext context)
     {
-        throw new NotImplementedException();
+        if (context.performed)
+        {
+            SprintEvent?.Invoke(true);
+        }
+        else if (context.canceled)
+        {
+            SprintEvent?.Invoke(false);
+        }
     }
 
     public void OnPrimaryFire(InputAction.CallbackContext context)
