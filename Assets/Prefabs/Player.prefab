@@ -81,7 +81,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 10
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -207,7 +207,8 @@ MonoBehaviour:
   inputReader: {fileID: 11400000, guid: 39bc196801333ec48adb32eab0d0246e, type: 2}
   playerTransform: {fileID: 4725384533996402274}
   rb: {fileID: 8692324051333363459}
-  moveSpeed: 5
+  normalSpeed: 5
+  sprintSpeed: 10
   turningRate: 270
 --- !u!114 &4610022434632418354
 MonoBehaviour:
