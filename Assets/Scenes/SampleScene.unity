@@ -1136,13 +1136,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  width: 21
-  height: 21
+  width: 30
+  height: 30
   wallPrefab: {fileID: 6898063613481816640, guid: 4d296e5bb839fb44a99a5609fb3721db, type: 3}
   floorPrefab: {fileID: 6524417323593870460, guid: 9d22d742a2a460742930dd5f857f6d7c, type: 3}
   startPrefab: {fileID: 2722771510116281568, guid: 441a3aabf8826d040afaf0d2d92de487, type: 3}
   exitPrefab: {fileID: 2448354240484216207, guid: 4c9da47278bb2dc4db340963e0b310f0, type: 3}
-  playerPrefab: {fileID: 1407749207192336346, guid: 46ca821f01318884d826e3783a577572, type: 3}
 --- !u!114 &1982306711
 MonoBehaviour:
   m_ObjectHideFlags: 0
