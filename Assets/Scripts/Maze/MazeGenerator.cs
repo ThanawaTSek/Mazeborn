@@ -80,18 +80,44 @@ public class MazeGenerator : NetworkBehaviour
             }
 
             if (!carved)
-                stack.Pop(); // ถ้าไม่มีทางไปแล้ว ให้ย้อนกลับ
+                stack.Pop();
         }
     }
 
     void SetStartRoom()
     {
-        startPos = new Vector2Int(2, 2);
-        for (int x = startPos.x; x <= startPos.x + 2; x++)
-            for (int y = startPos.y; y <= startPos.y + 2; y++)
-                maze[x, y] = 0;
+        int roomSize = 5;
+
+        startPos = new Vector2Int(1, 1);
+
+        for (int x = 0; x < roomSize; x++)
+        {
+            for (int y = 0; y < roomSize; y++)
+            {
+                int posX = startPos.x + x;
+                int posY = startPos.y + y;
+                maze[posX, posY] = 0;
+            }
+        }
+
+        // ปรับขนาด Prefab ให้เต็มห้อง
+        startPrefab.transform.localScale = new Vector3(roomSize, roomSize, 1);
+
+        // ปรับตำแหน่งไปตรงกลาง และ Snap เข้ากริด
+        Vector3 startRoomPosition = new Vector3(
+            Mathf.Floor(startPos.x - width / 2f + roomSize / 2f - 0.5f), 
+            Mathf.Floor(startPos.y - height / 2f + roomSize / 2f - 0.5f), 
+            0
+        );
+
+        Instantiate(startPrefab, startRoomPosition, Quaternion.identity);
     }
 
+
+
+
+    
+    
     void SetExit()
     {
         int exitY = Random.Range(2, height - 3);
