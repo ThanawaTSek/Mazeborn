@@ -149,9 +149,27 @@ public class MazeGenerator : NetworkBehaviour
     void SendMazeToClients()
     {
         for (int x = 0; x < width; x++)
+        {
             for (int y = 0; y < height; y++)
-                SetMazeClientRpc(x, y, maze[x, y]);
+            {
+                float offsetX = width / 2f;
+                float offsetY = height / 2f;
+                Vector2 pos = new Vector2((x - offsetX) * scaleFactor, (y - offsetY) * scaleFactor);
+
+                GameObject prefabToSpawn = (maze[x, y] == 1) ? wallPrefab : floorPrefab;
+                GameObject tile = Instantiate(prefabToSpawn, pos, Quaternion.identity);
+                tile.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1);
+
+                // Spawn ผ่าน Netcode
+                NetworkObject netObj = tile.GetComponent<NetworkObject>();
+                if (netObj != null && !netObj.IsSpawned)
+                {
+                    netObj.Spawn();
+                }
+            }
+        }
     }
+
 
     
     [ClientRpc]
