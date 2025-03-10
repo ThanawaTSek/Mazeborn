@@ -7,6 +7,8 @@ public class MazeGenerator : NetworkBehaviour
 {
     public int width = 21, height = 21;
     public GameObject wallPrefab, floorPrefab, startPrefab, exitPrefab;
+    public float scaleFactor = 1;
+    
     private int[,] maze;
     private Vector2Int startPos, exitPos;
     private Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
@@ -87,7 +89,6 @@ public class MazeGenerator : NetworkBehaviour
     void SetStartRoom()
     {
         int roomSize = 5;
-
         startPos = new Vector2Int(1, 1);
 
         for (int x = 0; x < roomSize; x++)
@@ -100,22 +101,17 @@ public class MazeGenerator : NetworkBehaviour
             }
         }
 
-        // ปรับขนาด Prefab ให้เต็มห้อง
-        startPrefab.transform.localScale = new Vector3(roomSize, roomSize, 1);
-
-        // ปรับตำแหน่งไปตรงกลาง และ Snap เข้ากริด
+        // ปรับตำแหน่งให้ตรงกลางของ Start Room
+        float scaleFactor = 1.2f; // ปรับตามที่ใช้ขยายแผนที่
         Vector3 startRoomPosition = new Vector3(
-            Mathf.Floor(startPos.x - width / 2f + roomSize / 2f - 0.5f), 
-            Mathf.Floor(startPos.y - height / 2f + roomSize / 2f - 0.5f), 
+            (startPos.x + roomSize / 2f) * scaleFactor - (width / 2f * scaleFactor),
+            (startPos.y + roomSize / 2f) * scaleFactor - (height / 2f * scaleFactor),
             0
         );
 
-        Instantiate(startPrefab, startRoomPosition, Quaternion.identity);
+        GameObject startObj = Instantiate(startPrefab, startRoomPosition, Quaternion.identity);
+        startObj.transform.localScale = new Vector3(roomSize * scaleFactor, roomSize * scaleFactor, 1);
     }
-
-
-
-
     
     
     void SetExit()
@@ -168,8 +164,9 @@ public class MazeGenerator : NetworkBehaviour
         float offsetX = width / 2f;
         float offsetY = height / 2f;
         
-        Vector2 pos = new Vector2(x - offsetX, y - offsetY);
-        Instantiate(value == 1 ? wallPrefab : floorPrefab, pos, Quaternion.identity);
+        Vector2 pos = new Vector2((x - offsetX) * scaleFactor, (y - offsetY) * scaleFactor);
+        GameObject tile = Instantiate(value == 1 ? wallPrefab : floorPrefab, pos, Quaternion.identity);
+        tile.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1);
     }
     
     void Shuffle(Vector2Int[] array)
