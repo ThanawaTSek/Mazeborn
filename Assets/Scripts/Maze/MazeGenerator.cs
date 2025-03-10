@@ -100,9 +100,7 @@ public class MazeGenerator : NetworkBehaviour
                 maze[posX, posY] = 0;
             }
         }
-
-        // ปรับตำแหน่งให้ตรงกลางของ Start Room
-        float scaleFactor = 1.2f; // ปรับตามที่ใช้ขยายแผนที่
+        
         Vector3 startRoomPosition = new Vector3(
             (startPos.x + roomSize / 2f) * scaleFactor - (width / 2f * scaleFactor),
             (startPos.y + roomSize / 2f) * scaleFactor - (height / 2f * scaleFactor),
