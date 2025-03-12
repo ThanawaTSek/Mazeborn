@@ -12,9 +12,8 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Setting")]
     [SerializeField] private float normalSpeed = 5f;
     [SerializeField] private float sprintSpeed = 10f;
-    [SerializeField] private float turningRate = 30f;
 
-    private Vector2 previousMovementInput;
+    private Vector2 movementInput;
     private float currentSpeed;
 
     private void Awake()
@@ -43,24 +42,34 @@ public class PlayerMovement : NetworkBehaviour
         inputReader.SprintEvent -= HandleSprint;
     }
 
-    private void Update()
-    {
-        if (!IsOwner) return;
-
-        float zRotation = previousMovementInput.x * -turningRate * Time.deltaTime;
-        playerTransform.Rotate(0, 0, zRotation);
-    }
-
     private void FixedUpdate()
     {
         if (!IsOwner) return;
 
-        rb.linearVelocity = playerTransform.up * previousMovementInput.y * currentSpeed;
+        MovePlayer();
+        RotatePlayer();
     }
 
-    private void HandleMove(Vector2 movementInput)
+    private void MovePlayer()
     {
-        previousMovementInput = movementInput;
+        // เคลื่อนที่ในทิศทางที่กด
+        rb.velocity = movementInput.normalized * currentSpeed;
+    }
+
+    private void RotatePlayer()
+    {
+        // เช็คว่ามี Input หรือไม่
+        if (movementInput != Vector2.zero)
+        {
+            // หันหน้าไปในทิศทางที่รับ Input
+            float angle = Mathf.Atan2(movementInput.y, movementInput.x) * Mathf.Rad2Deg;
+            rb.rotation = angle;
+        }
+    }
+
+    private void HandleMove(Vector2 input)
+    {
+        movementInput = input;
     }
 
     private void HandleSprint(bool isSprinting)

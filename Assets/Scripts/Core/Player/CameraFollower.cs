@@ -3,9 +3,10 @@ using UnityEngine;
 public class CameraFollower : MonoBehaviour
 {
     public Transform target;
-    public float smoothSpeed = 0.125f;
-    public Vector3 offset;
+    public Vector3 offset = new Vector3(0, 0, -10f);
+    public float smoothTime = 0.3f;
 
+    private Vector3 velocity = Vector3.zero;
     private bool hasFoundPlayer = false;
 
     private void Update()
@@ -20,10 +21,17 @@ public class CameraFollower : MonoBehaviour
     {
         if (target != null)
         {
-            Vector3 desiredPosition = target.position + offset;
-            Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
-            transform.position = smoothedPosition;
+            SmoothFollow();
         }
+    }
+
+    private void SmoothFollow()
+    {
+        // ตำแหน่งที่ต้องการของกล้อง
+        Vector3 desiredPosition = target.position + offset;
+        
+        // ใช้ SmoothDamp เพื่อเคลื่อนที่แบบนุ่มนวล
+        transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothTime);
     }
 
     private void TryFindPlayer()
@@ -33,7 +41,7 @@ public class CameraFollower : MonoBehaviour
         {
             target = player.transform;
             hasFoundPlayer = true;
-            Debug.Log("Camera now following: " + player.name);
+            Debug.Log("Camera is now following: " + player.name);
         }
     }
 }

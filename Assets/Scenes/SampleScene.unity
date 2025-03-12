@@ -601,8 +601,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 4725384533996402274, guid: 46ca821f01318884d826e3783a577572, type: 3}
-  smoothSpeed: 0.125
   offset: {x: 0, y: 0, z: -10}
+  smoothTime: 0.4
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -1214,8 +1214,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  width: 30
-  height: 30
+  width: 24
+  height: 24
   wallPrefab: {fileID: 6898063613481816640, guid: 4d296e5bb839fb44a99a5609fb3721db, type: 3}
   floorPrefab: {fileID: 6524417323593870460, guid: 9d22d742a2a460742930dd5f857f6d7c, type: 3}
   startPrefab: {fileID: 2722771510116281568, guid: 441a3aabf8826d040afaf0d2d92de487, type: 3}
