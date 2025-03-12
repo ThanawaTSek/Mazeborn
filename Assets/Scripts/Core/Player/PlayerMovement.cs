@@ -25,23 +25,28 @@ public class PlayerMovement : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if (!IsOwner) return;
-        
+
+        // ตั้ง Tag สำหรับ Local Player
+        gameObject.tag = "LocalPlayer";
+
+        // เชื่อม Event Input เฉพาะ Local Player
         inputReader.MoveEvent += HandleMove;
-        inputReader.SprintEvent += HandleSprint; // ✅ เชื่อม Sprint Event
+        inputReader.SprintEvent += HandleSprint;
     }
 
     public override void OnNetworkDespawn()
     {
         if (!IsOwner) return;
-        
+
+        // ยกเลิก Event เมื่อ Player หายไป
         inputReader.MoveEvent -= HandleMove;
-        inputReader.SprintEvent -= HandleSprint; // ✅ ลบ Event เมื่อ Destroy
+        inputReader.SprintEvent -= HandleSprint;
     }
 
-    void Update()
+    private void Update()
     {
         if (!IsOwner) return;
-        
+
         float zRotation = previousMovementInput.x * -turningRate * Time.deltaTime;
         playerTransform.Rotate(0, 0, zRotation);
     }
@@ -49,8 +54,8 @@ public class PlayerMovement : NetworkBehaviour
     private void FixedUpdate()
     {
         if (!IsOwner) return;
-        
-        rb.velocity = playerTransform.up * previousMovementInput.y * currentSpeed;
+
+        rb.linearVelocity = playerTransform.up * previousMovementInput.y * currentSpeed;
     }
 
     private void HandleMove(Vector2 movementInput)
