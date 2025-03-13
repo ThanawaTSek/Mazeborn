@@ -1220,7 +1220,7 @@ MonoBehaviour:
   floorPrefab: {fileID: 6524417323593870460, guid: 9d22d742a2a460742930dd5f857f6d7c, type: 3}
   startPrefab: {fileID: 2722771510116281568, guid: 441a3aabf8826d040afaf0d2d92de487, type: 3}
   exitPrefab: {fileID: 2448354240484216207, guid: 4c9da47278bb2dc4db340963e0b310f0, type: 3}
-  scaleFactor: 3
+  scaleFactor: 3.5
 --- !u!1 &2074523029
 GameObject:
   m_ObjectHideFlags: 0
