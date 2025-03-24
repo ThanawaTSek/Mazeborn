@@ -159,8 +159,7 @@ public class MazeGenerator : NetworkBehaviour
                 GameObject prefabToSpawn = (maze[x, y] == 1) ? wallPrefab : floorPrefab;
                 GameObject tile = Instantiate(prefabToSpawn, pos, Quaternion.identity);
                 tile.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1);
-
-                // Spawn ผ่าน Netcode
+                
                 NetworkObject netObj = tile.GetComponent<NetworkObject>();
                 if (netObj != null && !netObj.IsSpawned)
                 {
@@ -169,8 +168,7 @@ public class MazeGenerator : NetworkBehaviour
             }
         }
     }
-
-
+    
     
     [ClientRpc]
     void SetMazeClientRpc(int x, int y, int value)
