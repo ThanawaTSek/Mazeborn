@@ -24,11 +24,9 @@ public class PlayerMovement : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if (!IsOwner) return;
-
-        // ตั้ง Tag สำหรับ Local Player
+        
         gameObject.tag = "LocalPlayer";
-
-        // เชื่อม Event Input เฉพาะ Local Player
+        
         inputReader.MoveEvent += HandleMove;
         inputReader.SprintEvent += HandleSprint;
     }
@@ -36,8 +34,7 @@ public class PlayerMovement : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         if (!IsOwner) return;
-
-        // ยกเลิก Event เมื่อ Player หายไป
+        
         inputReader.MoveEvent -= HandleMove;
         inputReader.SprintEvent -= HandleSprint;
     }
