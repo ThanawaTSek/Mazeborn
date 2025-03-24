@@ -52,20 +52,19 @@ public class PlayerMovement : NetworkBehaviour
 
     private void MovePlayer()
     {
-        // เคลื่อนที่ในทิศทางที่กด
         rb.velocity = movementInput.normalized * currentSpeed;
     }
 
     private void RotatePlayer()
     {
-        // เช็คว่ามี Input หรือไม่
-        if (movementInput != Vector2.zero)
+        if (movementInput.x != 0)
         {
-            // หันหน้าไปในทิศทางที่รับ Input
-            float angle = Mathf.Atan2(movementInput.y, movementInput.x) * Mathf.Rad2Deg;
-            rb.rotation = angle;
+            Vector3 scale = playerTransform.localScale;
+            scale.x = movementInput.x > 0 ? Mathf.Abs(scale.x) : -Mathf.Abs(scale.x);
+            playerTransform.localScale = scale;
         }
     }
+
 
     private void HandleMove(Vector2 input)
     {
