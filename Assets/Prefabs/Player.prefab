@@ -162,8 +162,8 @@ MonoBehaviour:
   inputReader: {fileID: 11400000, guid: 39bc196801333ec48adb32eab0d0246e, type: 2}
   playerTransform: {fileID: 4725384533996402274}
   rb: {fileID: 8692324051333363459}
-  normalSpeed: 2
-  sprintSpeed: 5
+  normalSpeed: 1.8
+  sprintSpeed: 3
 --- !u!114 &4610022434632418354
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -306,8 +306,8 @@ MonoBehaviour:
   m_ComponentVersion: 2
   m_LightType: 3
   m_BlendStyleIndex: 0
-  m_FalloffIntensity: 0.5
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_FalloffIntensity: 0.364
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
@@ -332,7 +332,7 @@ MonoBehaviour:
   m_PointLightInnerAngle: 360
   m_PointLightOuterAngle: 360
   m_PointLightInnerRadius: 0
-  m_PointLightOuterRadius: 5
+  m_PointLightOuterRadius: 2
   m_ShapeLightParametricSides: 5
   m_ShapeLightParametricAngleOffset: 0
   m_ShapeLightParametricRadius: 1
