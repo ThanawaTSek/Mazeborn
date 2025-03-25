@@ -15,6 +15,9 @@ public class PlayerMovement : NetworkBehaviour
 
     private Vector2 movementInput;
     private float currentSpeed;
+    
+    private NetworkVariable<float> scaleX = new NetworkVariable<float>(
+        1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private void Awake()
     {
@@ -56,12 +59,20 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (movementInput.x != 0)
         {
-            Vector3 scale = playerTransform.localScale;
-            scale.x = movementInput.x > 0 ? Mathf.Abs(scale.x) : -Mathf.Abs(scale.x);
-            playerTransform.localScale = scale;
+            float newScaleX = movementInput.x > 0 ? Mathf.Abs(playerTransform.localScale.x) : -Mathf.Abs(playerTransform.localScale.x);
+            
+            if (IsOwner) 
+            {
+                UpdateScaleXServerRpc(newScaleX);
+            }
         }
     }
 
+    [ServerRpc]
+    private void UpdateScaleXServerRpc(float newScaleX)
+    {
+        scaleX.Value = newScaleX;
+    }
 
     private void HandleMove(Vector2 input)
     {
@@ -71,5 +82,10 @@ public class PlayerMovement : NetworkBehaviour
     private void HandleSprint(bool isSprinting)
     {
         currentSpeed = isSprinting ? sprintSpeed : normalSpeed;
+    }
+
+    private void Update()
+    {
+        playerTransform.localScale = new Vector3(scaleX.Value, 1f, 1f);
     }
 }
