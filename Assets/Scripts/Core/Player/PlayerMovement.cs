@@ -50,7 +50,7 @@ public class PlayerMovement : NetworkBehaviour
         RotatePlayer();
     }
 
-    private void MovePlayer()
+    public void MovePlayer()
     {
         rb.velocity = movementInput.normalized * currentSpeed;
     }
@@ -88,4 +88,11 @@ public class PlayerMovement : NetworkBehaviour
     {
         playerTransform.localScale = new Vector3(scaleX.Value, 1f, 1f);
     }
+    
+    public void SetMovementLocked(bool isLocked)
+    {
+        rb.velocity = Vector2.zero;
+        enabled = !isLocked;
+    }
+
 }

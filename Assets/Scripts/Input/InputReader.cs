@@ -37,7 +37,7 @@ public class InputReader : ScriptableObject, IPlayerActions
 
     public void OnInteract(InputAction.CallbackContext context)
     {
-        throw new NotImplementedException();
+        MoveEvent?.Invoke(context.ReadValue<Vector2>());
     }
 
     public void OnSprint(InputAction.CallbackContext context)
