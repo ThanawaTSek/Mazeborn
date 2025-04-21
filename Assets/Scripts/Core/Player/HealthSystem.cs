@@ -10,9 +10,12 @@ public class HealthSystem : MonoBehaviour
     [SerializeField] private Image[] hearts; 
     [SerializeField] private Sprite fullHeart;
     [SerializeField] private Sprite emptyHeart;
+    
+    private Vector3 initialPosition;
 
     void Start()
     {
+        initialPosition = transform.position;
         currentHealth = maxHealth;
         UpdateHealthUI();
     }
@@ -36,6 +39,11 @@ public class HealthSystem : MonoBehaviour
         currentHealth -= amount;
         if (currentHealth < 0) currentHealth = 0;
         UpdateHealthUI();
+
+        if (currentHealth == 0)
+        {
+            Respawn();
+        }
     }
 
     public void Heal(int amount)
@@ -59,4 +67,12 @@ public class HealthSystem : MonoBehaviour
             }
         }
     }
+
+    private void Respawn()
+    {
+        transform.position = initialPosition;
+        currentHealth = maxHealth;
+        UpdateHealthUI();
+    }
+
 }
