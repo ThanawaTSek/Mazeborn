@@ -8,6 +8,14 @@ public class CameraFollower : MonoBehaviour
 
     private Vector3 velocity = Vector3.zero;
     private bool hasFoundPlayer = false;
+    
+    [Header("Camera")]
+    [SerializeField] private float cameraSize = 2f;
+    
+    private void Start()
+    {
+        Camera.main.orthographicSize = cameraSize;
+    }
 
     private void Update()
     {
