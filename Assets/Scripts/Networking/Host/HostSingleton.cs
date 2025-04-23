@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Unity.Netcode;
 using UnityEngine;
 
 public class HostSingleton : MonoBehaviour

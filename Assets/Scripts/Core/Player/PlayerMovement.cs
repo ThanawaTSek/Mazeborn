@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Setting")]
     [SerializeField] private float normalSpeed = 5f;
     [SerializeField] private float sprintSpeed = 10f;
+    
+    [SerializeField] private Animator animator;
 
     private Vector2 movementInput;
     private float currentSpeed;
@@ -77,6 +80,7 @@ public class PlayerMovement : NetworkBehaviour
     private void HandleMove(Vector2 input)
     {
         movementInput = input;
+         
     }
 
     private void HandleSprint(bool isSprinting)
@@ -87,6 +91,22 @@ public class PlayerMovement : NetworkBehaviour
     private void Update()
     {
         playerTransform.localScale = new Vector3(scaleX.Value, 1f, 1f);
+
+        if (IsOwner)
+        {
+            float moveSpeed = movementInput.magnitude;
+            Debug.Log(moveSpeed);
+            if (moveSpeed == 1)
+            {
+                animator.SetBool("IsMoving", true);
+            }
+            else
+            {
+                animator.SetBool("IsMoving", false);
+            }
+            
+        }
+        
     }
     
     public void SetMovementLocked(bool isLocked)
