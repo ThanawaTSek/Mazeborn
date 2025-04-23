@@ -18,6 +18,7 @@ public class MazeExit : NetworkBehaviour
 
     private float holdTimer = 0f;
     private bool isLocalPlayerNear = false;
+    private bool gameEnded = false;
 
     private void Start()
     {
@@ -28,7 +29,7 @@ public class MazeExit : NetworkBehaviour
 
     private void Update()
     {
-        if (!isLocalPlayerNear) return;
+        if (!isLocalPlayerNear || gameEnded) return;
 
         if (Input.GetKey(KeyCode.E))
         {
@@ -58,6 +59,7 @@ public class MazeExit : NetworkBehaviour
                 holdSlider.value = 0;
         }
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     void RequestWinServerRpc(ulong winnerClientId)
@@ -95,9 +97,15 @@ public class MazeExit : NetworkBehaviour
             winnerText.enabled = true;
             winnerText.text = $"{winnerName} Wins!";
         }
-        
+
         if (hintText != null) hintText.enabled = false;
-        if (holdSlider != null) holdSlider.gameObject.SetActive(false);
+        if (holdSlider != null)
+        {
+            holdSlider.gameObject.SetActive(false);
+            holdSlider.value = 0;
+        }
+
+        gameEnded = true; // ✅ ห้ามโชว์อีก
     }
 
     private void OnTriggerEnter2D(Collider2D other)

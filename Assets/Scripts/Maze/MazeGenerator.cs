@@ -13,7 +13,6 @@ public class MazeGenerator : NetworkBehaviour
     private Vector2Int startPos, exitPos;
     private Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
 
-    // เก็บ tile ทั้งหมดที่สร้างแล้ว (สำหรับลบกำแพงได้)
     private Dictionary<Vector2Int, GameObject> tileObjects = new Dictionary<Vector2Int, GameObject>();
 
     public override void OnNetworkSpawn()
@@ -21,7 +20,6 @@ public class MazeGenerator : NetworkBehaviour
         if (IsServer)
         {
             GenerateMaze();
-            SetStartRoom();
             SetExit();
             RemoveDeadEnds();
             SendMazeToClients();
@@ -38,20 +36,22 @@ public class MazeGenerator : NetworkBehaviour
 
         int startX = Random.Range(1, width / 2) * 2;
         int startY = Random.Range(1, height / 2) * 2;
+        startPos = new Vector2Int(startX, startY);
         CarvePath(startX, startY);
 
-        CreateSpawnRoom();
-    }
+        // วาง StartPrefab ที่ตำแหน่งเริ่มต้น
+        Vector3 startWorldPos = new Vector3(
+            (startX - width / 2f) * scaleFactor,
+            (startY - height / 2f) * scaleFactor,
+            0
+        );
 
-    void CreateSpawnRoom()
-    {
-        int roomSize = 3;
-        int centerX = width / 2;
-        int centerY = height / 2;
+        GameObject startObj = Instantiate(startPrefab, startWorldPos, Quaternion.identity);
+        startObj.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1);
 
-        for (int x = -roomSize / 2; x <= roomSize / 2; x++)
-        for (int y = -roomSize / 2; y <= roomSize / 2; y++)
-            maze[centerX + x, centerY + y] = 0;
+        NetworkObject netObj = startObj.GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.IsSpawned)
+            netObj.Spawn();
     }
 
     void CarvePath(int startX, int startY)
@@ -86,39 +86,13 @@ public class MazeGenerator : NetworkBehaviour
         }
     }
 
-    void SetStartRoom()
-    {
-        int roomSize = 3;
-        startPos = new Vector2Int(1, 1);
-
-        for (int x = 0; x < roomSize; x++)
-        {
-            for (int y = 0; y < roomSize; y++)
-            {
-                int posX = startPos.x + x;
-                int posY = startPos.y + y;
-                maze[posX, posY] = 0;
-            }
-        }
-
-        Vector3 startRoomPosition = new Vector3(
-            (startPos.x + roomSize / 2f) * scaleFactor - (width / 2f * scaleFactor),
-            (startPos.y + roomSize / 2f) * scaleFactor - (height / 2f * scaleFactor),
-            0
-        );
-
-        GameObject startObj = Instantiate(startPrefab, startRoomPosition, Quaternion.identity);
-        startObj.transform.localScale = new Vector3(roomSize * scaleFactor, roomSize * scaleFactor, 1);
-    }
-
     void SetExit()
     {
         int exitY = Random.Range(2, height - 3);
         exitPos = new Vector2Int(width - 3, exitY);
         maze[exitPos.x, exitPos.y] = 0;
-        
         maze[exitPos.x - 1, exitPos.y] = 0;
-        
+
         if (tileObjects.ContainsKey(exitPos))
         {
             Destroy(tileObjects[exitPos]);
@@ -129,7 +103,7 @@ public class MazeGenerator : NetworkBehaviour
             Destroy(tileObjects[new Vector2Int(exitPos.x - 1, exitPos.y)]);
             tileObjects.Remove(new Vector2Int(exitPos.x - 1, exitPos.y));
         }
-        
+
         Vector3 exitWorldPos = new Vector3(
             (exitPos.x - width / 2f) * scaleFactor,
             (exitPos.y - height / 2f) * scaleFactor,
@@ -143,7 +117,6 @@ public class MazeGenerator : NetworkBehaviour
         if (netObj != null && !netObj.IsSpawned)
             netObj.Spawn();
     }
-
 
     void RemoveDeadEnds()
     {
