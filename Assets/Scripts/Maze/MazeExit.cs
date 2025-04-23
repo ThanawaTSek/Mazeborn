@@ -34,6 +34,7 @@ public class MazeExit : NetworkBehaviour
         {
             holdTimer += Time.deltaTime;
             if (holdSlider != null) holdSlider.gameObject.SetActive(true);
+            if (hintText != null) hintText.enabled = false;
 
             if (holdSlider != null)
                 holdSlider.value = holdTimer / holdTimeToExit;
@@ -51,6 +52,7 @@ public class MazeExit : NetworkBehaviour
         else
         {
             if (holdSlider != null) holdSlider.gameObject.SetActive(false);
+            if (hintText != null) hintText.enabled = true;
             holdTimer = 0f;
             if (holdSlider != null)
                 holdSlider.value = 0;
@@ -93,6 +95,9 @@ public class MazeExit : NetworkBehaviour
             winnerText.enabled = true;
             winnerText.text = $"{winnerName} Wins!";
         }
+        
+        if (hintText != null) hintText.enabled = false;
+        if (holdSlider != null) holdSlider.gameObject.SetActive(false);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
