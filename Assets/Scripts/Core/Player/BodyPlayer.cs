@@ -13,7 +13,7 @@ public class BodyPlayer:NetworkBehaviour
             UserData userData = HostSingleton.Instance.GameManager.NetworkServer.GetUserDataByClientId(OwnerClientId);
             
             PlayerName.Value = userData.userName;
-            
+           
             Debug.Log(PlayerName.Value);
         }
     }

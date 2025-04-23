@@ -29,21 +29,29 @@ public class MazeGenerator : NetworkBehaviour
     {
         maze = new int[width, height];
 
+        // 1. ทุกตำแหน่งเป็นกำแพง
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
             maze[x, y] = 1;
 
-        int startX = Random.Range(1, width / 2) * 2;
-        int startY = Random.Range(1, height / 2) * 2;
-        startPos = new Vector2Int(startX, startY);
-        CarvePath(startX, startY);
+        // 2. เคลียร์ห้อง 3x3 กลาง
+        startPos = new Vector2Int(width / 2, height / 2);
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                int x = startPos.x + dx;
+                int y = startPos.y + dy;
+                if (x >= 0 && x < width && y >= 0 && y < height)
+                    maze[x, y] = 0;
+            }
+        }
 
-        Vector3 startWorldPos = new Vector3(
-            startX - width / 2f,
-            startY - height / 2f,
-            0
-        );
+        // ✅ 3. ขุดทางเดินต่อจากกลาง
+        CarvePath(startPos.x, startPos.y);
 
+        // 4. วาง startPrefab ตรงกลาง
+        Vector3 startWorldPos = ToWorldPosition(startPos);
         GameObject startObj = Instantiate(startPrefab, startWorldPos, Quaternion.identity);
         startObj.transform.localScale = Vector3.one;
 
@@ -91,23 +99,10 @@ public class MazeGenerator : NetworkBehaviour
         maze[exitPos.x, exitPos.y] = 0;
         maze[exitPos.x - 1, exitPos.y] = 0;
 
-        if (tileObjects.ContainsKey(exitPos))
-        {
-            Destroy(tileObjects[exitPos]);
-            tileObjects.Remove(exitPos);
-        }
-        if (tileObjects.ContainsKey(new Vector2Int(exitPos.x - 1, exitPos.y)))
-        {
-            Destroy(tileObjects[new Vector2Int(exitPos.x - 1, exitPos.y)]);
-            tileObjects.Remove(new Vector2Int(exitPos.x - 1, exitPos.y));
-        }
+        DestroyIfExists(exitPos);
+        DestroyIfExists(new Vector2Int(exitPos.x - 1, exitPos.y));
 
-        Vector3 exitWorldPos = new Vector3(
-            exitPos.x - width / 2f,
-            exitPos.y - height / 2f,
-            0
-        );
-
+        Vector3 exitWorldPos = ToWorldPosition(exitPos);
         GameObject exitObj = Instantiate(exitPrefab, exitWorldPos, Quaternion.identity);
         exitObj.transform.localScale = Vector3.one;
 
@@ -149,23 +144,44 @@ public class MazeGenerator : NetworkBehaviour
         {
             for (int y = 0; y < height; y++)
             {
-                float offsetX = width / 2f;
-                float offsetY = height / 2f;
-                Vector2 pos = new Vector2((x - offsetX), (y - offsetY));
+                Vector2Int gridPos = new Vector2Int(x, y);
+                Vector3 worldPos = ToWorldPosition(gridPos);
 
                 GameObject prefabToSpawn = (maze[x, y] == 1) ? wallPrefab : floorPrefab;
-                GameObject tile = Instantiate(prefabToSpawn, pos, Quaternion.identity);
+                GameObject tile = Instantiate(prefabToSpawn, worldPos, Quaternion.identity);
                 tile.transform.localScale = Vector3.one;
 
-                tileObjects[new Vector2Int(x, y)] = tile;
+                tileObjects[gridPos] = tile;
 
                 NetworkObject netObj = tile.GetComponent<NetworkObject>();
                 if (netObj != null && !netObj.IsSpawned)
-                {
                     netObj.Spawn();
-                }
             }
         }
+    }
+
+    void DestroyIfExists(Vector2Int pos)
+    {
+        if (tileObjects.ContainsKey(pos))
+        {
+            Destroy(tileObjects[pos]);
+            tileObjects.Remove(pos);
+        }
+    }
+
+    Vector3 ToWorldPosition(Vector2Int gridPos)
+    {
+        return new Vector3(gridPos.x - width / 2f, gridPos.y - height / 2f, 0);
+    }
+
+    public Vector3 GetStartWorldPosition()
+    {
+        return ToWorldPosition(startPos);
+    }
+
+    bool IsInsideMaze(int x, int y)
+    {
+        return x > 1 && x < width - 2 && y > 1 && y < height - 2;
     }
 
     void Shuffle(Vector2Int[] array)
@@ -177,10 +193,5 @@ public class MazeGenerator : NetworkBehaviour
             array[i] = array[rand];
             array[rand] = temp;
         }
-    }
-
-    bool IsInsideMaze(int x, int y)
-    {
-        return x > 1 && x < width - 2 && y > 1 && y < height - 2;
     }
 }
