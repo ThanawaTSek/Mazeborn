@@ -7,7 +7,6 @@ public class MazeGenerator : NetworkBehaviour
 {
     public int width = 21, height = 21;
     public GameObject wallPrefab, floorPrefab, startPrefab, exitPrefab;
-    public float scaleFactor = 1;
 
     private int[,] maze;
     private Vector2Int startPos, exitPos;
@@ -39,15 +38,14 @@ public class MazeGenerator : NetworkBehaviour
         startPos = new Vector2Int(startX, startY);
         CarvePath(startX, startY);
 
-        // วาง StartPrefab ที่ตำแหน่งเริ่มต้น
         Vector3 startWorldPos = new Vector3(
-            (startX - width / 2f) * scaleFactor,
-            (startY - height / 2f) * scaleFactor,
+            startX - width / 2f,
+            startY - height / 2f,
             0
         );
 
         GameObject startObj = Instantiate(startPrefab, startWorldPos, Quaternion.identity);
-        startObj.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1);
+        startObj.transform.localScale = Vector3.one;
 
         NetworkObject netObj = startObj.GetComponent<NetworkObject>();
         if (netObj != null && !netObj.IsSpawned)
@@ -105,13 +103,13 @@ public class MazeGenerator : NetworkBehaviour
         }
 
         Vector3 exitWorldPos = new Vector3(
-            (exitPos.x - width / 2f) * scaleFactor,
-            (exitPos.y - height / 2f) * scaleFactor,
+            exitPos.x - width / 2f,
+            exitPos.y - height / 2f,
             0
         );
 
         GameObject exitObj = Instantiate(exitPrefab, exitWorldPos, Quaternion.identity);
-        exitObj.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1);
+        exitObj.transform.localScale = Vector3.one;
 
         NetworkObject netObj = exitObj.GetComponent<NetworkObject>();
         if (netObj != null && !netObj.IsSpawned)
@@ -153,11 +151,11 @@ public class MazeGenerator : NetworkBehaviour
             {
                 float offsetX = width / 2f;
                 float offsetY = height / 2f;
-                Vector2 pos = new Vector2((x - offsetX) * scaleFactor, (y - offsetY) * scaleFactor);
+                Vector2 pos = new Vector2((x - offsetX), (y - offsetY));
 
                 GameObject prefabToSpawn = (maze[x, y] == 1) ? wallPrefab : floorPrefab;
                 GameObject tile = Instantiate(prefabToSpawn, pos, Quaternion.identity);
-                tile.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1);
+                tile.transform.localScale = Vector3.one;
 
                 tileObjects[new Vector2Int(x, y)] = tile;
 
