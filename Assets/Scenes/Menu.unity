@@ -634,6 +634,7 @@ MonoBehaviour:
   target: {fileID: 4725384533996402274, guid: 46ca821f01318884d826e3783a577572, type: 3}
   offset: {x: 0, y: 0, z: -10}
   smoothTime: 0.4
+  cameraSize: 2
 --- !u!1 &557574734
 GameObject:
   m_ObjectHideFlags: 0
@@ -2766,7 +2767,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 0.509434, g: 0.2621033, b: 0.14177644, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
