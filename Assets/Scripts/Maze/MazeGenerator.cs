@@ -8,10 +8,13 @@ public class MazeGenerator : NetworkBehaviour
     public int width = 21, height = 21;
     public GameObject wallPrefab, floorPrefab, startPrefab, exitPrefab;
     public float scaleFactor = 1;
-    
+
     private int[,] maze;
     private Vector2Int startPos, exitPos;
     private Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+
+    // เก็บ tile ทั้งหมดที่สร้างแล้ว (สำหรับลบกำแพงได้)
+    private Dictionary<Vector2Int, GameObject> tileObjects = new Dictionary<Vector2Int, GameObject>();
 
     public override void OnNetworkSpawn()
     {
@@ -22,7 +25,6 @@ public class MazeGenerator : NetworkBehaviour
             SetExit();
             RemoveDeadEnds();
             SendMazeToClients();
-            
         }
     }
 
@@ -30,7 +32,6 @@ public class MazeGenerator : NetworkBehaviour
     {
         maze = new int[width, height];
 
-        // กำหนดให้ทุกช่องเป็นกำแพงก่อน
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
             maze[x, y] = 1;
@@ -38,13 +39,13 @@ public class MazeGenerator : NetworkBehaviour
         int startX = Random.Range(1, width / 2) * 2;
         int startY = Random.Range(1, height / 2) * 2;
         CarvePath(startX, startY);
-        
+
         CreateSpawnRoom();
     }
-    
+
     void CreateSpawnRoom()
     {
-        int roomSize = 3; 
+        int roomSize = 3;
         int centerX = width / 2;
         int centerY = height / 2;
 
@@ -52,7 +53,6 @@ public class MazeGenerator : NetworkBehaviour
         for (int y = -roomSize / 2; y <= roomSize / 2; y++)
             maze[centerX + x, centerY + y] = 0;
     }
-
 
     void CarvePath(int startX, int startY)
     {
@@ -100,7 +100,7 @@ public class MazeGenerator : NetworkBehaviour
                 maze[posX, posY] = 0;
             }
         }
-        
+
         Vector3 startRoomPosition = new Vector3(
             (startPos.x + roomSize / 2f) * scaleFactor - (width / 2f * scaleFactor),
             (startPos.y + roomSize / 2f) * scaleFactor - (height / 2f * scaleFactor),
@@ -110,14 +110,26 @@ public class MazeGenerator : NetworkBehaviour
         GameObject startObj = Instantiate(startPrefab, startRoomPosition, Quaternion.identity);
         startObj.transform.localScale = new Vector3(roomSize * scaleFactor, roomSize * scaleFactor, 1);
     }
-    
-    
+
     void SetExit()
     {
         int exitY = Random.Range(2, height - 3);
         exitPos = new Vector2Int(width - 3, exitY);
         maze[exitPos.x, exitPos.y] = 0;
-
+        
+        maze[exitPos.x - 1, exitPos.y] = 0;
+        
+        if (tileObjects.ContainsKey(exitPos))
+        {
+            Destroy(tileObjects[exitPos]);
+            tileObjects.Remove(exitPos);
+        }
+        if (tileObjects.ContainsKey(new Vector2Int(exitPos.x - 1, exitPos.y)))
+        {
+            Destroy(tileObjects[new Vector2Int(exitPos.x - 1, exitPos.y)]);
+            tileObjects.Remove(new Vector2Int(exitPos.x - 1, exitPos.y));
+        }
+        
         Vector3 exitWorldPos = new Vector3(
             (exitPos.x - width / 2f) * scaleFactor,
             (exitPos.y - height / 2f) * scaleFactor,
@@ -173,7 +185,9 @@ public class MazeGenerator : NetworkBehaviour
                 GameObject prefabToSpawn = (maze[x, y] == 1) ? wallPrefab : floorPrefab;
                 GameObject tile = Instantiate(prefabToSpawn, pos, Quaternion.identity);
                 tile.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1);
-                
+
+                tileObjects[new Vector2Int(x, y)] = tile;
+
                 NetworkObject netObj = tile.GetComponent<NetworkObject>();
                 if (netObj != null && !netObj.IsSpawned)
                 {
@@ -182,21 +196,7 @@ public class MazeGenerator : NetworkBehaviour
             }
         }
     }
-    
-    
-    [ClientRpc]
-    void SetMazeClientRpc(int x, int y, int value)
-    {
-        maze[x, y] = value;
-        
-        float offsetX = width / 2f;
-        float offsetY = height / 2f;
-        
-        Vector2 pos = new Vector2((x - offsetX) * scaleFactor, (y - offsetY) * scaleFactor);
-        GameObject tile = Instantiate(value == 1 ? wallPrefab : floorPrefab, pos, Quaternion.identity);
-        tile.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1);
-    }
-    
+
     void Shuffle(Vector2Int[] array)
     {
         for (int i = 0; i < array.Length; i++)

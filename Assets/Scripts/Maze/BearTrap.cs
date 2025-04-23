@@ -8,7 +8,7 @@ public class BearTrap : NetworkBehaviour
 {
     [SerializeField] private int damage = 1;
     [SerializeField] private float escapeTime = 3f;
-    [SerializeField] private float escapeForce = 5f; // ✅ แรงดีดตัวเมื่อหลุดจากกับดัก
+    [SerializeField] private float escapeForce = 5f;
     [SerializeField] private TextMeshProUGUI escapeText;
     [SerializeField] private Slider escapeProgressBar;
 
