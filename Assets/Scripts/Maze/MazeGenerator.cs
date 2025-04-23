@@ -117,7 +117,21 @@ public class MazeGenerator : NetworkBehaviour
         int exitY = Random.Range(2, height - 3);
         exitPos = new Vector2Int(width - 3, exitY);
         maze[exitPos.x, exitPos.y] = 0;
+
+        Vector3 exitWorldPos = new Vector3(
+            (exitPos.x - width / 2f) * scaleFactor,
+            (exitPos.y - height / 2f) * scaleFactor,
+            0
+        );
+
+        GameObject exitObj = Instantiate(exitPrefab, exitWorldPos, Quaternion.identity);
+        exitObj.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1);
+
+        NetworkObject netObj = exitObj.GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.IsSpawned)
+            netObj.Spawn();
     }
+
 
     void RemoveDeadEnds()
     {

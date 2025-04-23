@@ -383,23 +383,23 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 1292
-      height: 549
-    m_Scale: {x: 0.5083333, y: 0.5083333}
-    m_Translation: {x: 646, y: 274.5}
+      width: 1281
+      height: 545
+    m_Scale: {x: 0.5046296, y: 0.5046296}
+    m_Translation: {x: 640.5, y: 272.5}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -1270.8197
+      x: -1269.2478
       y: -540
-      width: 2541.6394
+      width: 2538.4956
       height: 1080
     m_MinimalGUI: 1
-  m_defaultScale: 0.5083333
-  m_LastWindowPixelSize: {x: 1292, y: 570}
+  m_defaultScale: 0.5046296
+  m_LastWindowPixelSize: {x: 1281, y: 566}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 00000000000000000000
@@ -1055,7 +1055,7 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: 6.5444746, y: 6.785864, z: -0.2592036}
+    m_Target: {x: -0.4873244, y: -0.1630038, z: -3.523297}
     speed: 2
     m_Value: {x: 6.5444746, y: 6.785864, z: -0.2592036}
   m_RenderMode: 0
@@ -1107,7 +1107,7 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: 0, y: 0, z: 0, w: 1}
   m_Size:
-    m_Target: 35.088528
+    m_Target: 0.89942217
     speed: 2
     m_Value: 35.088528
   m_Ortho:
@@ -1311,7 +1311,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 7aeb0000
     m_LastClickedID: 60282
-    m_ExpandedIDs: 0000000076e90000d2eb0000d4eb0000d6eb0000d8eb0000daeb0000dceb0000deeb0000e0eb0000e2eb0000e4eb0000e6eb0000e8eb0000eaeb0000eceb0000
+    m_ExpandedIDs: 000000007ae90000d6eb0000d8eb0000daeb0000dceb0000deeb0000e0eb0000e2eb0000e4eb0000e6eb0000e8eb0000eaeb0000eceb0000eeeb0000f0eb0000f2eb0000f4eb0000f6eb0000f8eb0000faeb0000fceb0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1340,7 +1340,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 0000000076e90000d2eb0000d4eb0000d6eb0000d8eb0000daeb0000dceb0000deeb0000e0eb0000e2eb0000e4eb0000e6eb0000e8eb0000eaeb0000eceb0000
+    m_ExpandedIDs: 000000007ae90000d6eb0000d8eb0000daeb0000dceb0000deeb0000e0eb0000e2eb0000e4eb0000e6eb0000e8eb0000eaeb0000eceb0000eeeb0000f0eb0000f2eb0000f4eb0000f6eb0000f8eb0000faeb0000fceb0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
