@@ -456,6 +456,7 @@ MonoBehaviour:
   target: {fileID: 4725384533996402274, guid: 46ca821f01318884d826e3783a577572, type: 3}
   offset: {x: 0, y: 0, z: -10}
   smoothTime: 0.4
+  cameraSize: 2
 --- !u!1 &1418178263
 GameObject:
   m_ObjectHideFlags: 0

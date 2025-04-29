@@ -6,13 +6,14 @@ using Unity.Netcode;
 public class MazeGenerator : NetworkBehaviour
 {
     public int width = 21, height = 21;
-    public GameObject wallPrefab, floorPrefab, startPrefab, exitPrefab;
+    public GameObject wallPrefab, floorPrefab, startPrefab, exitPrefab, bearTrapPrefab;
 
     private int[,] maze;
     private Vector2Int startPos, exitPos;
     private Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
-
     private Dictionary<Vector2Int, GameObject> tileObjects = new Dictionary<Vector2Int, GameObject>();
+
+    private List<Vector3> trapWorldPositions = new List<Vector3>();
 
     public override void OnNetworkSpawn()
     {
@@ -22,35 +23,36 @@ public class MazeGenerator : NetworkBehaviour
             SetExit();
             RemoveDeadEnds();
             SendMazeToClients();
+            SpawnBearTraps(10);
         }
     }
+    
+    void Awake()
+    {
+        Debug.Log("Awake - BearTrapPrefab: " + bearTrapPrefab);
+    }
+
 
     void GenerateMaze()
     {
         maze = new int[width, height];
-
-        // 1. ทุกตำแหน่งเป็นกำแพง
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
             maze[x, y] = 1;
 
-        // 2. เคลียร์ห้อง 3x3 กลาง
+        // ห้องกลาง 3x3
         startPos = new Vector2Int(width / 2, height / 2);
         for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++)
         {
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                int x = startPos.x + dx;
-                int y = startPos.y + dy;
-                if (x >= 0 && x < width && y >= 0 && y < height)
-                    maze[x, y] = 0;
-            }
+            int x = startPos.x + dx;
+            int y = startPos.y + dy;
+            if (x >= 0 && x < width && y >= 0 && y < height)
+                maze[x, y] = 0;
         }
 
-        // ✅ 3. ขุดทางเดินต่อจากกลาง
         CarvePath(startPos.x, startPos.y);
 
-        // 4. วาง startPrefab ตรงกลาง
         Vector3 startWorldPos = ToWorldPosition(startPos);
         GameObject startObj = Instantiate(startPrefab, startWorldPos, Quaternion.identity);
         startObj.transform.localScale = Vector3.one;
@@ -114,15 +116,9 @@ public class MazeGenerator : NetworkBehaviour
     void RemoveDeadEnds()
     {
         for (int x = 2; x < width - 2; x++)
-        {
-            for (int y = 2; y < height - 2; y++)
-            {
-                if (maze[x, y] == 0 && CountAdjacentWalls(x, y) >= 3)
-                {
-                    maze[x, y] = 1;
-                }
-            }
-        }
+        for (int y = 2; y < height - 2; y++)
+            if (maze[x, y] == 0 && CountAdjacentWalls(x, y) >= 3)
+                maze[x, y] = 1;
     }
 
     int CountAdjacentWalls(int x, int y)
@@ -141,24 +137,67 @@ public class MazeGenerator : NetworkBehaviour
     void SendMazeToClients()
     {
         for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
         {
-            for (int y = 0; y < height; y++)
-            {
-                Vector2Int gridPos = new Vector2Int(x, y);
-                Vector3 worldPos = ToWorldPosition(gridPos);
+            Vector2Int gridPos = new Vector2Int(x, y);
+            Vector3 worldPos = ToWorldPosition(gridPos);
 
-                GameObject prefabToSpawn = (maze[x, y] == 1) ? wallPrefab : floorPrefab;
-                GameObject tile = Instantiate(prefabToSpawn, worldPos, Quaternion.identity);
-                tile.transform.localScale = Vector3.one;
+            GameObject prefabToSpawn = (maze[x, y] == 1) ? wallPrefab : floorPrefab;
+            GameObject tile = Instantiate(prefabToSpawn, worldPos, Quaternion.identity);
+            tile.transform.localScale = Vector3.one;
 
-                tileObjects[gridPos] = tile;
+            tileObjects[gridPos] = tile;
 
-                NetworkObject netObj = tile.GetComponent<NetworkObject>();
-                if (netObj != null && !netObj.IsSpawned)
-                    netObj.Spawn();
-            }
+            NetworkObject netObj = tile.GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.IsSpawned)
+                netObj.Spawn();
         }
     }
+
+    void SpawnBearTraps(int count = 10)
+    {
+        if (bearTrapPrefab == null)
+        {
+            Debug.LogError("[MazeGenerator] BearTrap prefab is NULL! Please assign it in the Inspector.");
+            return;
+        }
+
+        trapWorldPositions.Clear();
+        List<Vector2Int> floorPositions = new List<Vector2Int>();
+
+        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+        {
+            Vector2Int pos = new Vector2Int(x, y);
+            if (maze[x, y] == 0 && pos != startPos && pos != exitPos)
+                floorPositions.Add(pos);
+        }
+
+        ShuffleList(floorPositions);
+
+        for (int i = 0; i < Mathf.Min(count, floorPositions.Count); i++)
+        {
+            Vector2Int pos = floorPositions[i];
+            Vector3 worldPos = ToWorldPosition(pos);
+            
+            Debug.Log($"[BearTrap DEBUG] Spawning at Grid: {pos}, World: {worldPos}");
+            
+            GameObject debugCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            debugCube.transform.position = worldPos;
+            debugCube.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            debugCube.GetComponent<Renderer>().material.color = Color.red;
+            
+            GameObject trap = Instantiate(bearTrapPrefab, worldPos, Quaternion.identity);
+            trap.transform.localScale = Vector3.one;
+
+            trapWorldPositions.Add(worldPos);
+
+            NetworkObject netObj = trap.GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.IsSpawned)
+                netObj.Spawn();
+        }
+    }
+
 
     void DestroyIfExists(Vector2Int pos)
     {
@@ -192,6 +231,29 @@ public class MazeGenerator : NetworkBehaviour
             Vector2Int temp = array[i];
             array[i] = array[rand];
             array[rand] = temp;
+        }
+    }
+
+    void ShuffleList<T>(List<T> list)
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            int rand = Random.Range(i, list.Count);
+            T temp = list[i];
+            list[i] = list[rand];
+            list[rand] = temp;
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        if (trapWorldPositions != null)
+        {
+            foreach (var pos in trapWorldPositions)
+            {
+                Gizmos.DrawWireCube(pos, new Vector3(1, 1, 0));
+            }
         }
     }
 }
