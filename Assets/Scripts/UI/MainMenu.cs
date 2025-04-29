@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
@@ -13,4 +14,6 @@ public class MainMenu : MonoBehaviour
     {
         await ClientSingleton.Instance.GameManager.StartClientAsync(joinCodeField.text);
     }
+    
+    
 }
