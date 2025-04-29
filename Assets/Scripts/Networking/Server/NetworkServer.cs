@@ -9,6 +9,9 @@ public class NetworkServer : IDisposable
 
     private Dictionary<ulong, string> clientIdToAuth = new Dictionary<ulong, string>();
     private Dictionary<string, UserData> authIdToUserData = new Dictionary<string, UserData>();
+    
+    public event Action<ulong, UserData> OnUserDataReady;
+
 
     public NetworkServer(NetworkManager networkManager)
     {
@@ -42,6 +45,8 @@ public class NetworkServer : IDisposable
         clientIdToAuth[request.ClientNetworkId] = userData.userAuthId;
         authIdToUserData[userData.userAuthId] = userData;
         Debug.Log(userData.userName);
+        
+        OnUserDataReady?.Invoke(request.ClientNetworkId, userData);
 
         response.Approved = true;
         response.CreatePlayerObject = true;
