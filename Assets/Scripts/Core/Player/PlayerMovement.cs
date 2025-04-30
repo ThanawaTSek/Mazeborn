@@ -95,7 +95,6 @@ public class PlayerMovement : NetworkBehaviour
         if (IsOwner)
         {
             float moveSpeed = movementInput.magnitude;
-            Debug.Log(moveSpeed);
             if (moveSpeed == 1)
             {
                 animator.SetBool("IsMoving", true);

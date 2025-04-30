@@ -18,7 +18,8 @@ public class PlayerNameDisplay : MonoBehaviour
 
     private void HandlePlayerNameChanged(FixedString32Bytes oldName, FixedString32Bytes newName)
     {
-        playerNameText.text = newName.ToString();
+        playerNameText.text = "Name : " + newName.ToString();
+
     }
 
     private void OnDestroy()
