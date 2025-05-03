@@ -15,6 +15,7 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private float sprintSpeed = 10f;
     
     [SerializeField] private Animator animator;
+    [SerializeField] private SpriteRenderer spriteRenderer;
 
     private Vector2 movementInput;
     private float currentSpeed;
@@ -62,14 +63,11 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (movementInput.x != 0)
         {
-            float newScaleX = movementInput.x > 0 ? Mathf.Abs(playerTransform.localScale.x) : -Mathf.Abs(playerTransform.localScale.x);
-            
-            if (IsOwner) 
-            {
-                UpdateScaleXServerRpc(newScaleX);
-            }
+            bool facingLeft = movementInput.x < 0;
+            spriteRenderer.flipX = facingLeft;
         }
     }
+
 
     [ServerRpc]
     private void UpdateScaleXServerRpc(float newScaleX)
