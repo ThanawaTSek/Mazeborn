@@ -188,7 +188,7 @@ public class MazeGenerator : NetworkBehaviour
             debugCube.GetComponent<Renderer>().material.color = Color.red;
             
             GameObject trap = Instantiate(bearTrapPrefab, worldPos, Quaternion.identity);
-            trap.transform.localScale = Vector3.one;
+            trap.transform.localScale = new Vector3(0.3f, 0.3f, 1f);
 
             trapWorldPositions.Add(worldPos);
 
