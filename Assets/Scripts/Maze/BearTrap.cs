@@ -9,108 +9,137 @@ public class BearTrap : NetworkBehaviour
     [SerializeField] private int damage = 1;
     [SerializeField] private float escapeTime = 3f;
     [SerializeField] private float escapeForce = 5f;
-    [SerializeField] private TextMeshProUGUI escapeText;
-    [SerializeField] private Slider escapeProgressBar;
 
     private bool isPlayerTrapped = false;
     private float escapeTimer = 0f;
+
+    private NetworkObject trappedPlayer;
     private PlayerMovement playerMovement;
     private HealthSystem playerHealth;
     private Rigidbody2D playerRb;
-    private Collider2D playerCollider; // ✅ เพิ่ม Collider2D ของ Player เพื่อใช้หาตำแหน่งเท้า
-
-    private void Start()
-    {
-        escapeText.gameObject.SetActive(false);
-        escapeProgressBar.gameObject.SetActive(false);
-        escapeProgressBar.value = 0f;
-    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log($"[BearTrap] {collision.gameObject.name} entered the trap!");
+        if (!IsServer || isPlayerTrapped) return;
 
-        if (collision.CompareTag("LocalPlayer") && !isPlayerTrapped)
+        if (collision.TryGetComponent<NetworkObject>(out NetworkObject netObj))
         {
-            playerMovement = collision.GetComponent<PlayerMovement>();
-            playerHealth = collision.GetComponent<HealthSystem>();
-            playerRb = collision.GetComponent<Rigidbody2D>();
-            playerCollider = collision.GetComponent<Collider2D>();
-            
-            if (playerMovement != null && playerHealth != null && playerMovement.IsOwner)
+            playerMovement = netObj.GetComponent<PlayerMovement>();
+            playerHealth = netObj.GetComponent<HealthSystem>();
+            playerRb = netObj.GetComponent<Rigidbody2D>();
+
+            if (playerMovement != null && playerHealth != null)
             {
-                Debug.Log("[BearTrap] Player trapped!");
+                trappedPlayer = netObj;
                 isPlayerTrapped = true;
-                
+
                 Vector3 playerPosition = collision.transform.position;
-                float playerFootY = playerCollider.bounds.min.y;
+                float footY = collision.bounds.min.y;
                 float trapY = transform.position.y;
-                float yOffset = playerPosition.y - playerFootY;
-                
+                float yOffset = playerPosition.y - footY;
+
                 collision.transform.position = new Vector3(transform.position.x, trapY + yOffset, playerPosition.z);
                 playerRb.velocity = Vector2.zero;
-                
+
                 playerMovement.SetMovementLocked(true);
                 playerHealth.TakeDamage(damage);
-                
-                escapeText.gameObject.SetActive(true);
-                escapeProgressBar.value = 0f;
 
-                StartCoroutine(EscapeRoutine());
-            }
-            else
-            {
-                Debug.Log("[BearTrap] PlayerMovement or HealthSystem is null");
+                ShowUIClientRpc(netObj.OwnerClientId);
             }
         }
     }
 
-    private IEnumerator EscapeRoutine()
+    [ClientRpc]
+    private void ShowUIClientRpc(ulong targetClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId != targetClientId) return;
+
+        var health = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject()?.GetComponent<HealthSystem>();
+        health?.ShowEscapeUI();
+        StartCoroutine(EscapeRoutine(health));
+    }
+
+    private IEnumerator EscapeRoutine(HealthSystem health)
     {
         escapeTimer = 0f;
         while (isPlayerTrapped)
         {
             if (Input.GetKey(KeyCode.E))
             {
-                escapeProgressBar.gameObject.SetActive(true);
                 escapeTimer += Time.deltaTime;
-                escapeProgressBar.value = escapeTimer / escapeTime;
+                health?.SetEscapeProgress(escapeTimer / escapeTime);
+
+                if (escapeTimer >= escapeTime)
+                {
+                    EscapeAttemptServerRpc();
+                    yield break;
+                }
             }
             else
             {
-                escapeProgressBar.gameObject.SetActive(false);
                 escapeTimer = 0f;
-                escapeProgressBar.value = 0f;
-            }
-
-            if (escapeTimer >= escapeTime)
-            {
-                ReleasePlayer();
-                yield break;
+                health?.SetEscapeProgress(0f);
             }
 
             yield return null;
         }
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    private void EscapeAttemptServerRpc(ServerRpcParams rpcParams = default)
+    {
+        if (!isPlayerTrapped || trappedPlayer == null) return;
+
+        ulong targetClientId = trappedPlayer.OwnerClientId;
+        ReleasePlayer();
+        HideUIClientRpc(targetClientId);
+    }
+
+    [ClientRpc]
+    private void HideUIClientRpc(ulong targetClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId != targetClientId) return;
+
+        Debug.Log($"[BearTrap] Hiding UI on Client: {targetClientId}");
+        
+        var localPlayerObj = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+        var health = localPlayerObj?.GetComponent<HealthSystem>();
+        health?.HideEscapeUI();
+    }
+
+
     private void ReleasePlayer()
     {
-        isPlayerTrapped = false;
+        StopAllCoroutines();
 
         if (playerMovement != null)
-        {
             playerMovement.SetMovementLocked(false);
-        }
-        
-        escapeText.gameObject.SetActive(false);
-        escapeProgressBar.gameObject.SetActive(false);
-        
+
         if (playerRb != null)
         {
             Vector2 escapeDirection = (playerRb.transform.position - transform.position).normalized;
             playerRb.AddForce(escapeDirection * escapeForce, ForceMode2D.Impulse);
         }
 
-        Debug.Log("[BearTrap] Player escaped!");
+        isPlayerTrapped = false;
+        trappedPlayer = null;
+    }
+
+    public void ForceReleaseIfTrapped(HealthSystem player)
+    {
+        if (!isPlayerTrapped || trappedPlayer == null)
+        {
+            isPlayerTrapped = false;
+            trappedPlayer = null;
+            return;
+        }
+
+        var trappedHealth = trappedPlayer.GetComponent<HealthSystem>();
+        if (trappedHealth == player)
+        {
+            ulong targetClientId = trappedPlayer.OwnerClientId;
+            ReleasePlayer();
+            HideUIClientRpc(targetClientId);
+        }
     }
 }

@@ -1,5 +1,7 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Unity.Netcode;
 
 public class HealthSystem : MonoBehaviour
 {
@@ -7,10 +9,14 @@ public class HealthSystem : MonoBehaviour
     private int currentHealth;
 
     [Header("UI Elements")]
-    [SerializeField] private Image[] hearts; 
+    [SerializeField] private Image[] hearts;
     [SerializeField] private Sprite fullHeart;
     [SerializeField] private Sprite emptyHeart;
-    
+
+    [Header("Escape UI")]
+    [SerializeField] private TextMeshProUGUI escapeText;
+    [SerializeField] private Slider escapeProgressBar;
+
     private Vector3 initialPosition;
 
     void Start()
@@ -18,8 +24,11 @@ public class HealthSystem : MonoBehaviour
         initialPosition = transform.position;
         currentHealth = maxHealth;
         UpdateHealthUI();
+        HideEscapeUI();
+        
+        Debug.Log($"[HealthSystem] My Owner ID = {GetComponent<NetworkBehaviour>().OwnerClientId}, Local ID = {Unity.Netcode.NetworkManager.Singleton.LocalClientId}");
     }
-    
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -33,7 +42,6 @@ public class HealthSystem : MonoBehaviour
         }
     }
 
-
     public void TakeDamage(int amount)
     {
         currentHealth -= amount;
@@ -42,6 +50,8 @@ public class HealthSystem : MonoBehaviour
 
         if (currentHealth == 0)
         {
+            // ปิด UI หนี Trap ทันที (แม้ยังอยู่ใน Trap)
+            HideEscapeUI();
             Respawn();
         }
     }
@@ -57,14 +67,7 @@ public class HealthSystem : MonoBehaviour
     {
         for (int i = 0; i < hearts.Length; i++)
         {
-            if (i < currentHealth)
-            {
-                hearts[i].sprite = fullHeart;
-            }
-            else
-            {
-                hearts[i].sprite = emptyHeart;
-            }
+            hearts[i].sprite = (i < currentHealth) ? fullHeart : emptyHeart;
         }
     }
 
@@ -73,6 +76,57 @@ public class HealthSystem : MonoBehaviour
         transform.position = initialPosition;
         currentHealth = maxHealth;
         UpdateHealthUI();
+
+        // ปิด UI เผื่อยังค้างอยู่
+        HideEscapeUI();
+
+        // ปล่อยตัวเองจากกับดักทั้งหมดที่จำไว้
+        BearTrap[] traps = FindObjectsOfType<BearTrap>();
+        foreach (BearTrap trap in traps)
+        {
+            trap.ForceReleaseIfTrapped(this);
+        }
     }
 
+    public void ShowEscapeUI()
+    {
+        if (escapeText != null) escapeText.gameObject.SetActive(true);
+        if (escapeProgressBar != null)
+        {
+            escapeProgressBar.value = 0f;
+            escapeProgressBar.gameObject.SetActive(true);
+        }
+    }
+
+    public void HideEscapeUI()
+    {
+        Debug.Log("[HealthSystem] HideEscapeUI CALLED");
+
+        if (escapeText != null)
+        {
+            Debug.Log("[HealthSystem] escapeText FOUND");
+            escapeText.gameObject.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning("[HealthSystem] escapeText is NULL");
+        }
+
+        if (escapeProgressBar != null)
+        {
+            Debug.Log("[HealthSystem] escapeProgressBar FOUND");
+            escapeProgressBar.gameObject.SetActive(false);
+            escapeProgressBar.value = 0f;
+        }
+        else
+        {
+            Debug.LogWarning("[HealthSystem] escapeProgressBar is NULL");
+        }
+    }
+
+    public void SetEscapeProgress(float value)
+    {
+        if (escapeProgressBar != null)
+            escapeProgressBar.value = value;
+    }
 }
