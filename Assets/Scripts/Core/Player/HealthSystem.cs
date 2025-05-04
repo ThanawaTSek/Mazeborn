@@ -2,11 +2,14 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
+using System.Collections;
 
 public class HealthSystem : MonoBehaviour
 {
     [SerializeField] private int maxHealth = 3;
     private int currentHealth;
+
+    public bool IsDead() => currentHealth <= 0;
 
     [Header("UI Elements")]
     [SerializeField] private Image[] hearts;
@@ -25,7 +28,7 @@ public class HealthSystem : MonoBehaviour
         currentHealth = maxHealth;
         UpdateHealthUI();
         HideEscapeUI();
-        
+
         Debug.Log($"[HealthSystem] My Owner ID = {GetComponent<NetworkBehaviour>().OwnerClientId}, Local ID = {Unity.Netcode.NetworkManager.Singleton.LocalClientId}");
     }
 
@@ -50,10 +53,16 @@ public class HealthSystem : MonoBehaviour
 
         if (currentHealth == 0)
         {
-            // ปิด UI หนี Trap ทันที (แม้ยังอยู่ใน Trap)
+            // ❗ ปิด UI ก่อน แล้วรอ 1 frame ค่อย Respawn
             HideEscapeUI();
-            Respawn();
+            StartCoroutine(DelayedRespawn());
         }
+    }
+
+    private IEnumerator DelayedRespawn()
+    {
+        yield return null; // ✅ รอ 1 frame ให้ Unity ซ่อน UI ให้เสร็จ
+        Respawn();
     }
 
     public void Heal(int amount)
@@ -76,11 +85,8 @@ public class HealthSystem : MonoBehaviour
         transform.position = initialPosition;
         currentHealth = maxHealth;
         UpdateHealthUI();
-
-        // ปิด UI เผื่อยังค้างอยู่
         HideEscapeUI();
 
-        // ปล่อยตัวเองจากกับดักทั้งหมดที่จำไว้
         BearTrap[] traps = FindObjectsOfType<BearTrap>();
         foreach (BearTrap trap in traps)
         {
