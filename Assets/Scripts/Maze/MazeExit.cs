@@ -65,8 +65,17 @@ public class MazeExit : NetworkBehaviour
     void RequestWinServerRpc(ulong winnerClientId)
     {
         string winnerName = $"Player {winnerClientId}";
-        AnnounceWinnerClientRpc(winnerName);
         
+        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(winnerClientId, out var client))
+        {
+            var playerObj = client.PlayerObject;
+            if (playerObj != null && playerObj.TryGetComponent(out BodyPlayer bodyPlayer))
+            {
+                winnerName = bodyPlayer.PlayerName.Value.ToString();
+            }
+        }
+
+        AnnounceWinnerClientRpc(winnerName);
         StartCoroutine(WaitAndReturnToMenu());
     }
     
