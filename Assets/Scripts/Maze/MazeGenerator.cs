@@ -7,6 +7,12 @@ public class MazeGenerator : NetworkBehaviour
 {
     public int width = 21, height = 21;
     public GameObject wallPrefab, floorPrefab, startPrefab, exitPrefab, bearTrapPrefab;
+    
+    [Header("Background")]
+    public GameObject backgroundPrefab;
+    
+    [Header("Items")]
+    public GameObject itemHealPrefab;
 
     private int[,] maze;
     private Vector2Int startPos, exitPos;
@@ -19,11 +25,13 @@ public class MazeGenerator : NetworkBehaviour
     {
         if (IsServer)
         {
+            SpawnBackground();
             GenerateMaze();
             SetExit();
             RemoveDeadEnds();
             SendMazeToClients();
             SpawnBearTraps(10);
+            SpawnHealItems(10);
         }
     }
     
@@ -244,7 +252,72 @@ public class MazeGenerator : NetworkBehaviour
             list[rand] = temp;
         }
     }
+    
+    void SpawnHealItems(int count = 10)
+    {
+        if (itemHealPrefab == null)
+        {
+            Debug.LogError("[MazeGenerator] HealItem prefab is NULL! Please assign it in the Inspector.");
+            return;
+        }
 
+        HashSet<Vector2Int> trapGridPositions = new HashSet<Vector2Int>();
+        foreach (Vector3 worldPos in trapWorldPositions)
+        {
+            Vector2Int gridPos = new Vector2Int(
+                Mathf.RoundToInt(worldPos.x + width / 2f),
+                Mathf.RoundToInt(worldPos.y + height / 2f)
+            );
+            trapGridPositions.Add(gridPos);
+        }
+
+        List<Vector2Int> validHealPositions = new List<Vector2Int>();
+
+        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+        {
+            Vector2Int pos = new Vector2Int(x, y);
+            if (maze[x, y] == 0 && pos != startPos && pos != exitPos && !trapGridPositions.Contains(pos))
+                validHealPositions.Add(pos);
+        }
+
+        ShuffleList(validHealPositions);
+
+        for (int i = 0; i < Mathf.Min(count, validHealPositions.Count); i++)
+        {
+            Vector2Int pos = validHealPositions[i];
+            Vector3 worldPos = ToWorldPosition(pos);
+
+            GameObject healItem = Instantiate(itemHealPrefab, worldPos, Quaternion.identity);
+            healItem.transform.localScale = new Vector3(0.3f, 0.3f, 1f);
+
+            NetworkObject netObj = healItem.GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.IsSpawned)
+                netObj.Spawn();
+        }
+    }
+    
+    void SpawnBackground()
+    {
+        if (backgroundPrefab == null)
+        {
+            Debug.LogError("[MazeGenerator] BG prefab is NULL! Please assign it in the Inspector.");
+            return;
+        }
+        
+        float bgWidth = width + 20f;
+        float bgHeight = height + 20f;
+        
+        Vector3 bgCenterPosition = new Vector3(0, 0, 5);
+
+        GameObject bg = Instantiate(backgroundPrefab, bgCenterPosition, Quaternion.identity);
+        bg.transform.localScale = new Vector3(bgWidth, bgHeight, 1);
+
+        NetworkObject netObj = bg.GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.IsSpawned)
+            netObj.Spawn();
+    }
+    
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;

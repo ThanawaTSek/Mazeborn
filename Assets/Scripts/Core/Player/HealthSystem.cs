@@ -4,12 +4,13 @@ using UnityEngine.UI;
 using Unity.Netcode;
 using System.Collections;
 
-public class HealthSystem : MonoBehaviour
+public class HealthSystem : NetworkBehaviour
 {
     [SerializeField] private int maxHealth = 3;
-    private int currentHealth;
+    private NetworkVariable<int> currentHealth = new NetworkVariable<int>(
+        writePerm: NetworkVariableWritePermission.Server);
 
-    public bool IsDead() => currentHealth <= 0;
+    public bool IsDead() => currentHealth.Value <= 0;
 
     [Header("UI Elements")]
     [SerializeField] private Image[] hearts;
@@ -22,18 +23,52 @@ public class HealthSystem : MonoBehaviour
 
     private Vector3 initialPosition;
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
         initialPosition = transform.position;
-        currentHealth = maxHealth;
-        UpdateHealthUI();
-        HideEscapeUI();
 
-        Debug.Log($"[HealthSystem] My Owner ID = {GetComponent<NetworkBehaviour>().OwnerClientId}, Local ID = {Unity.Netcode.NetworkManager.Singleton.LocalClientId}");
+        if (IsServer)
+            currentHealth.Value = maxHealth;
+
+        currentHealth.OnValueChanged += OnHealthChanged;
+
+        if (!IsOwner)
+        {
+            // ซ่อน UI ถ้าไม่ใช่ของ Local Player 
+            if (escapeText != null) escapeText.gameObject.SetActive(false);
+            if (escapeProgressBar != null) escapeProgressBar.gameObject.SetActive(false);
+            foreach (var heart in hearts)
+            {
+                if (heart != null)
+                    heart.gameObject.SetActive(false);
+            }
+        }
+
+        if (IsOwner)
+        {
+            UpdateHealthUI();
+            HideEscapeUI();
+        }
+
+        Debug.Log($"[HealthSystem] OnNetworkSpawn -> Owner: {OwnerClientId}, Local: {NetworkManager.Singleton.LocalClientId}, IsOwner = {IsOwner}");
+    }
+
+    private void OnDestroy()
+    {
+        if (IsSpawned)
+            currentHealth.OnValueChanged -= OnHealthChanged;
+    }
+
+    private void OnHealthChanged(int oldValue, int newValue)
+    {
+        if (!IsOwner) return;
+        UpdateHealthUI();
     }
 
     void Update()
     {
+        if (!IsOwner) return;
+
         if (Input.GetKeyDown(KeyCode.Space))
         {
             TakeDamage(1);
@@ -47,13 +82,19 @@ public class HealthSystem : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
-        currentHealth -= amount;
-        if (currentHealth < 0) currentHealth = 0;
-        UpdateHealthUI();
-
-        if (currentHealth == 0)
+        if (!IsServer)
         {
-            // ❗ ปิด UI ก่อน แล้วรอ 1 frame ค่อย Respawn
+            Debug.LogWarning("TakeDamage called on client, skipping.");
+            return;
+        }
+
+        currentHealth.Value -= amount;
+        if (currentHealth.Value < 0) currentHealth.Value = 0;
+
+        Debug.Log($"[HealthSystem] {OwnerClientId} took {amount} damage. Remaining: {currentHealth.Value}");
+
+        if (currentHealth.Value == 0)
+        {
             HideEscapeUI();
             StartCoroutine(DelayedRespawn());
         }
@@ -61,31 +102,41 @@ public class HealthSystem : MonoBehaviour
 
     private IEnumerator DelayedRespawn()
     {
-        yield return null; // ✅ รอ 1 frame ให้ Unity ซ่อน UI ให้เสร็จ
+        yield return null;
         Respawn();
     }
 
     public void Heal(int amount)
     {
-        currentHealth += amount;
-        if (currentHealth > maxHealth) currentHealth = maxHealth;
-        UpdateHealthUI();
+        if (!IsServer) return;
+
+        currentHealth.Value += amount;
+        if (currentHealth.Value > maxHealth) currentHealth.Value = maxHealth;
     }
 
     private void UpdateHealthUI()
     {
+        if (!IsOwner) return;
+
         for (int i = 0; i < hearts.Length; i++)
         {
-            hearts[i].sprite = (i < currentHealth) ? fullHeart : emptyHeart;
+            if (hearts[i] != null)
+                hearts[i].sprite = (i < currentHealth.Value) ? fullHeart : emptyHeart;
         }
     }
 
     private void Respawn()
     {
         transform.position = initialPosition;
-        currentHealth = maxHealth;
-        UpdateHealthUI();
-        HideEscapeUI();
+        currentHealth.Value = maxHealth;
+
+        UpdateRespawnClientRpc(initialPosition); //Sync ตำแหน่งกลับไปให้ Owner
+
+        if (IsOwner)
+        {
+            UpdateHealthUI();
+            HideEscapeUI();
+        }
 
         BearTrap[] traps = FindObjectsOfType<BearTrap>();
         foreach (BearTrap trap in traps)
@@ -94,8 +145,18 @@ public class HealthSystem : MonoBehaviour
         }
     }
 
+    [ClientRpc]
+    private void UpdateRespawnClientRpc(Vector3 newPosition, ClientRpcParams rpcParams = default)
+    {
+        if (!IsOwner) return;
+        transform.position = newPosition;
+    }
+
+
     public void ShowEscapeUI()
     {
+        if (!IsOwner) return;
+
         if (escapeText != null) escapeText.gameObject.SetActive(true);
         if (escapeProgressBar != null)
         {
@@ -106,32 +167,22 @@ public class HealthSystem : MonoBehaviour
 
     public void HideEscapeUI()
     {
-        Debug.Log("[HealthSystem] HideEscapeUI CALLED");
+        if (!IsOwner) return;
 
         if (escapeText != null)
-        {
-            Debug.Log("[HealthSystem] escapeText FOUND");
             escapeText.gameObject.SetActive(false);
-        }
-        else
-        {
-            Debug.LogWarning("[HealthSystem] escapeText is NULL");
-        }
 
         if (escapeProgressBar != null)
         {
-            Debug.Log("[HealthSystem] escapeProgressBar FOUND");
             escapeProgressBar.gameObject.SetActive(false);
             escapeProgressBar.value = 0f;
-        }
-        else
-        {
-            Debug.LogWarning("[HealthSystem] escapeProgressBar is NULL");
         }
     }
 
     public void SetEscapeProgress(float value)
     {
+        if (!IsOwner) return;
+
         if (escapeProgressBar != null)
             escapeProgressBar.value = value;
     }

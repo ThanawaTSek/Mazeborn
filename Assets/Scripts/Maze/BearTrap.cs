@@ -27,7 +27,7 @@ public class BearTrap : NetworkBehaviour
             playerMovement = netObj.GetComponent<PlayerMovement>();
             playerHealth = netObj.GetComponent<HealthSystem>();
             playerRb = netObj.GetComponent<Rigidbody2D>();
-
+            
             if (playerMovement != null && playerHealth != null)
             {
                 trappedPlayer = netObj;
@@ -46,6 +46,7 @@ public class BearTrap : NetworkBehaviour
 
                 ShowUIClientRpc(netObj.OwnerClientId);
             }
+
         }
     }
 
