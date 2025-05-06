@@ -9,19 +9,21 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private InputReader inputReader;
     [SerializeField] private Transform playerTransform;
     [SerializeField] private Rigidbody2D rb;
-    
-    [Header("Setting")]
-    [SerializeField] private float normalSpeed = 5f;
-    [SerializeField] private float sprintSpeed = 10f;
-    
     [SerializeField] private Animator animator;
     [SerializeField] private SpriteRenderer spriteRenderer;
 
+    [Header("Setting")]
+    [SerializeField] private float normalSpeed = 5f;
+    [SerializeField] private float sprintSpeed = 10f;
+
     private Vector2 movementInput;
     private float currentSpeed;
-    
-    private NetworkVariable<float> scaleX = new NetworkVariable<float>(
-        1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private NetworkVariable<bool> isMoving = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
+    private NetworkVariable<bool> isFacingLeft = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     private void Awake()
     {
@@ -30,20 +32,21 @@ public class PlayerMovement : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsOwner) return;
-        
-        gameObject.tag = "LocalPlayer";
-        
-        inputReader.MoveEvent += HandleMove;
-        inputReader.SprintEvent += HandleSprint;
+        if (IsOwner)
+        {
+            gameObject.tag = "LocalPlayer";
+            inputReader.MoveEvent += HandleMove;
+            inputReader.SprintEvent += HandleSprint;
+        }
     }
 
     public override void OnNetworkDespawn()
     {
-        if (!IsOwner) return;
-        
-        inputReader.MoveEvent -= HandleMove;
-        inputReader.SprintEvent -= HandleSprint;
+        if (IsOwner)
+        {
+            inputReader.MoveEvent -= HandleMove;
+            inputReader.SprintEvent -= HandleSprint;
+        }
     }
 
     private void FixedUpdate()
@@ -54,7 +57,7 @@ public class PlayerMovement : NetworkBehaviour
         RotatePlayer();
     }
 
-    public void MovePlayer()
+    private void MovePlayer()
     {
         rb.velocity = movementInput.normalized * currentSpeed;
     }
@@ -64,21 +67,26 @@ public class PlayerMovement : NetworkBehaviour
         if (movementInput.x != 0)
         {
             bool facingLeft = movementInput.x < 0;
-            spriteRenderer.flipX = facingLeft;
+            isFacingLeft.Value = facingLeft;
         }
     }
 
-
-    [ServerRpc]
-    private void UpdateScaleXServerRpc(float newScaleX)
+    private void Update()
     {
-        scaleX.Value = newScaleX;
+        // Sync visual state for all players
+        spriteRenderer.flipX = isFacingLeft.Value;
+        animator.SetBool("IsMoving", isMoving.Value);
+
+        // Local input controls
+        if (IsOwner)
+        {
+            isMoving.Value = movementInput.magnitude == 1;
+        }
     }
 
     private void HandleMove(Vector2 input)
     {
         movementInput = input;
-         
     }
 
     private void HandleSprint(bool isSprinting)
@@ -86,30 +94,9 @@ public class PlayerMovement : NetworkBehaviour
         currentSpeed = isSprinting ? sprintSpeed : normalSpeed;
     }
 
-    private void Update()
-    {
-        playerTransform.localScale = new Vector3(scaleX.Value, 1f, 1f);
-
-        if (IsOwner)
-        {
-            float moveSpeed = movementInput.magnitude;
-            if (moveSpeed == 1)
-            {
-                animator.SetBool("IsMoving", true);
-            }
-            else
-            {
-                animator.SetBool("IsMoving", false);
-            }
-            
-        }
-        
-    }
-    
     public void SetMovementLocked(bool isLocked)
     {
         rb.velocity = Vector2.zero;
         enabled = !isLocked;
     }
-
 }

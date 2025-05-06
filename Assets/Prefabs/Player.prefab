@@ -304,7 +304,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 8214532257367136016}
@@ -435,10 +435,10 @@ MonoBehaviour:
   inputReader: {fileID: 11400000, guid: 39bc196801333ec48adb32eab0d0246e, type: 2}
   playerTransform: {fileID: 4725384533996402274}
   rb: {fileID: 8692324051333363459}
-  normalSpeed: 1.8
-  sprintSpeed: 3
   animator: {fileID: 9152373098070180751}
   spriteRenderer: {fileID: 6199496442851529623}
+  normalSpeed: 1.8
+  sprintSpeed: 3
 --- !u!114 &4610022434632418354
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -546,6 +546,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6dba77dd290bf2428ae2818bfba23ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 3
   hearts:
   - {fileID: 5961194385765532405}
