@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
 
@@ -9,6 +10,7 @@ public class BearTrap : NetworkBehaviour
     [SerializeField] private int damage = 1;
     [SerializeField] private float escapeTime = 3f;
     [SerializeField] private float escapeForce = 5f;
+    [SerializeField] private float quarantineDuration = 1.5f;
 
     private NetworkVariable<bool> isPlayerTrapped = new NetworkVariable<bool>(
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -20,16 +22,23 @@ public class BearTrap : NetworkBehaviour
     private HealthSystem playerHealth;
     private Rigidbody2D playerRb;
 
+    private Dictionary<ulong, float> quarantineTimers = new Dictionary<ulong, float>();
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (!IsServer || isPlayerTrapped.Value) return;
 
         if (collision.TryGetComponent<NetworkObject>(out NetworkObject netObj))
         {
+            ulong clientId = netObj.OwnerClientId;
+
+            if (quarantineTimers.ContainsKey(clientId) && Time.time < quarantineTimers[clientId])
+                return; // ยังอยู่ในช่วง Quarantine
+
             playerMovement = netObj.GetComponent<PlayerMovement>();
             playerHealth = netObj.GetComponent<HealthSystem>();
             playerRb = netObj.GetComponent<Rigidbody2D>();
-            
+
             if (playerMovement != null && playerHealth != null)
             {
                 trappedPlayer = netObj;
@@ -46,13 +55,12 @@ public class BearTrap : NetworkBehaviour
                 playerMovement.SetMovementLocked(true);
                 playerHealth.TakeDamage(damage);
 
-                ShowUIClientRpc(netObj.OwnerClientId);
-                SnapToTrapClientRpc(transform.position, yOffset, netObj.OwnerClientId);
+                ShowUIClientRpc(clientId);
+                SnapToTrapClientRpc(transform.position, yOffset, clientId);
             }
-
         }
     }
-    
+
     [ClientRpc]
     private void SnapToTrapClientRpc(Vector3 trapPosition, float yOffset, ulong targetClientId)
     {
@@ -66,7 +74,7 @@ public class BearTrap : NetworkBehaviour
         var movement = player.GetComponent<PlayerMovement>();
         movement?.SetMovementLocked(true);
     }
-    
+
     [ClientRpc]
     private void UnlockMovementClientRpc(ulong targetClientId)
     {
@@ -113,14 +121,13 @@ public class BearTrap : NetworkBehaviour
         }
     }
 
-
     [ServerRpc(RequireOwnership = false)]
     private void EscapeAttemptServerRpc(ServerRpcParams rpcParams = default)
     {
         if (!isPlayerTrapped.Value || trappedPlayer == null) return;
-        
+
         if (rpcParams.Receive.SenderClientId != trappedPlayer.OwnerClientId) return;
-        
+
         var health = trappedPlayer.GetComponent<HealthSystem>();
         if (health == null || health.IsDead()) return;
 
@@ -129,20 +136,16 @@ public class BearTrap : NetworkBehaviour
         HideUIClientRpc(targetClientId);
     }
 
-
-
     [ClientRpc]
     private void HideUIClientRpc(ulong targetClientId)
     {
         if (NetworkManager.Singleton.LocalClientId != targetClientId) return;
 
-        Debug.Log($"[BearTrap] Hiding UI on Client: {targetClientId}");
-        
         var localPlayerObj = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
         var health = localPlayerObj?.GetComponent<HealthSystem>();
         health?.HideEscapeUI();
     }
-    
+
     [ClientRpc]
     public void StopEscapeRoutineClientRpc(ulong targetClientId)
     {
@@ -158,8 +161,6 @@ public class BearTrap : NetworkBehaviour
         health?.HideEscapeUI();
     }
 
-
-
     private void ReleasePlayer()
     {
         StopAllCoroutines();
@@ -174,12 +175,14 @@ public class BearTrap : NetworkBehaviour
         }
 
         if (trappedPlayer != null)
+        {
             UnlockMovementClientRpc(trappedPlayer.OwnerClientId);
+            quarantineTimers[trappedPlayer.OwnerClientId] = Time.time + quarantineDuration;
+        }
 
         isPlayerTrapped.Value = false;
         trappedPlayer = null;
     }
-
 
     public void ForceReleaseIfTrapped(HealthSystem player)
     {
@@ -198,7 +201,7 @@ public class BearTrap : NetworkBehaviour
             HideUIClientRpc(targetClientId);
         }
     }
-    
+
     public void ClearTrapReferenceIfMatched(HealthSystem player)
     {
         if (trappedPlayer == null || !isPlayerTrapped.Value) return;
@@ -207,9 +210,9 @@ public class BearTrap : NetworkBehaviour
         if (health == player)
         {
             StopAllCoroutines();
+            quarantineTimers.Remove(player.OwnerClientId);
             trappedPlayer = null;
             isPlayerTrapped.Value = false;
         }
     }
-
 }
