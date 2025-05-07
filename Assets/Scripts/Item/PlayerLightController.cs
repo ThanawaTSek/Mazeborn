@@ -17,7 +17,7 @@ public class PlayerLightController : NetworkBehaviour
     {
         if (flashlight != null && flashlight.lightType == Light2D.LightType.Point)
         {
-            flashlight.pointLightOuterRadius += 2f;
+            flashlight.pointLightOuterRadius += 0.5f;
         }
     }
 }
