@@ -13,6 +13,7 @@ public class MazeGenerator : NetworkBehaviour
     
     [Header("Items")]
     public GameObject itemHealPrefab;
+    public GameObject itemFlashLightPrefab;
 
     private int[,] maze;
     private Vector2Int startPos, exitPos;
@@ -32,6 +33,7 @@ public class MazeGenerator : NetworkBehaviour
             SendMazeToClients();
             SpawnBearTraps(10);
             SpawnHealItems(10);
+            SpawnFlashlights(10);
         }
     }
     
@@ -203,7 +205,31 @@ public class MazeGenerator : NetworkBehaviour
         }
 
     }
+    
+    private void SpawnFlashlights(int count = 3)
+    {
+        if (!IsServer || itemFlashLightPrefab == null) return;
 
+        List<Vector2Int> floorPositions = new List<Vector2Int>();
+
+        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+        {
+            Vector2Int pos = new Vector2Int(x, y);
+            if (maze[x, y] == 0 && pos != startPos && pos != exitPos)
+                floorPositions.Add(pos);
+        }
+
+        ShuffleList(floorPositions);
+
+        for (int i = 0; i < Mathf.Min(count, floorPositions.Count); i++)
+        {
+            Vector2Int pos = floorPositions[i];
+            Vector3 worldPos = ToWorldPosition(pos);
+            GameObject flashlight = Instantiate(itemFlashLightPrefab, worldPos, Quaternion.identity);
+            flashlight.GetComponent<NetworkObject>().Spawn();
+        }
+    }
 
     void DestroyIfExists(Vector2Int pos)
     {
@@ -222,7 +248,7 @@ public class MazeGenerator : NetworkBehaviour
     public Vector3 GetStartWorldPosition()
     {
         return ToWorldPosition(startPos);
-    }
+    } 
 
     bool IsInsideMaze(int x, int y)
     {

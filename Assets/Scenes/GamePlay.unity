@@ -620,6 +620,7 @@ MonoBehaviour:
   bearTrapPrefab: {fileID: 1911465012750874853, guid: d2a21576894cd434eb3d39bb4ddedee6, type: 3}
   backgroundPrefab: {fileID: 8330363487347465089, guid: 22c77bc453f506245b0bc1125002def1, type: 3}
   itemHealPrefab: {fileID: 7125808069983415126, guid: 04c3ea18fc5df1d468feda57bbaab550, type: 3}
+  itemFlashLightPrefab: {fileID: 2760494082722063593, guid: eb81eedadd43b1e43bb7f5a6e1460560, type: 3}
 --- !u!114 &1982306713
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -632,11 +633,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2851549b6ad41d489281a0076f6e581, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  backgroundTilePrefab: {fileID: 8330363487347465089, guid: 22c77bc453f506245b0bc1125002def1, type: 3}
-  width: 1000
-  height: 1000
-  tileSize: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
