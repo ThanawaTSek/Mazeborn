@@ -45,9 +45,34 @@ public class BearTrap : NetworkBehaviour
                 playerHealth.TakeDamage(damage);
 
                 ShowUIClientRpc(netObj.OwnerClientId);
+                SnapToTrapClientRpc(transform.position, yOffset, netObj.OwnerClientId);
             }
 
         }
+    }
+    
+    [ClientRpc]
+    private void SnapToTrapClientRpc(Vector3 trapPosition, float yOffset, ulong targetClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId != targetClientId) return;
+
+        var player = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+        if (player == null) return;
+
+        player.transform.position = new Vector3(trapPosition.x, trapPosition.y + yOffset, player.transform.position.z);
+
+        var movement = player.GetComponent<PlayerMovement>();
+        movement?.SetMovementLocked(true);
+    }
+    
+    [ClientRpc]
+    private void UnlockMovementClientRpc(ulong targetClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId != targetClientId) return;
+
+        var player = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+        var movement = player?.GetComponent<PlayerMovement>();
+        movement?.SetMovementLocked(false);
     }
 
     [ClientRpc]
@@ -122,9 +147,13 @@ public class BearTrap : NetworkBehaviour
             playerRb.AddForce(escapeDirection * escapeForce, ForceMode2D.Impulse);
         }
 
+        if (trappedPlayer != null)
+            UnlockMovementClientRpc(trappedPlayer.OwnerClientId);
+
         isPlayerTrapped = false;
         trappedPlayer = null;
     }
+
 
     public void ForceReleaseIfTrapped(HealthSystem player)
     {
