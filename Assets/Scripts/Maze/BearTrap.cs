@@ -10,7 +10,9 @@ public class BearTrap : NetworkBehaviour
     [SerializeField] private float escapeTime = 3f;
     [SerializeField] private float escapeForce = 5f;
 
-    private bool isPlayerTrapped = false;
+    private NetworkVariable<bool> isPlayerTrapped = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     private float escapeTimer = 0f;
 
     private NetworkObject trappedPlayer;
@@ -20,7 +22,7 @@ public class BearTrap : NetworkBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!IsServer || isPlayerTrapped) return;
+        if (!IsServer || isPlayerTrapped.Value) return;
 
         if (collision.TryGetComponent<NetworkObject>(out NetworkObject netObj))
         {
@@ -31,7 +33,7 @@ public class BearTrap : NetworkBehaviour
             if (playerMovement != null && playerHealth != null)
             {
                 trappedPlayer = netObj;
-                isPlayerTrapped = true;
+                isPlayerTrapped.Value = true;
 
                 Vector3 playerPosition = collision.transform.position;
                 float footY = collision.bounds.min.y;
@@ -88,7 +90,7 @@ public class BearTrap : NetworkBehaviour
     private IEnumerator EscapeRoutine(HealthSystem health)
     {
         escapeTimer = 0f;
-        while (isPlayerTrapped)
+        while (true)
         {
             if (Input.GetKey(KeyCode.E))
             {
@@ -111,15 +113,19 @@ public class BearTrap : NetworkBehaviour
         }
     }
 
+
     [ServerRpc(RequireOwnership = false)]
     private void EscapeAttemptServerRpc(ServerRpcParams rpcParams = default)
     {
-        if (!isPlayerTrapped || trappedPlayer == null) return;
+        if (!isPlayerTrapped.Value || trappedPlayer == null) return;
+        
+        if (rpcParams.Receive.SenderClientId != trappedPlayer.OwnerClientId) return;
 
         ulong targetClientId = trappedPlayer.OwnerClientId;
         ReleasePlayer();
         HideUIClientRpc(targetClientId);
     }
+
 
     [ClientRpc]
     private void HideUIClientRpc(ulong targetClientId)
@@ -150,16 +156,16 @@ public class BearTrap : NetworkBehaviour
         if (trappedPlayer != null)
             UnlockMovementClientRpc(trappedPlayer.OwnerClientId);
 
-        isPlayerTrapped = false;
+        isPlayerTrapped.Value = false;
         trappedPlayer = null;
     }
 
 
     public void ForceReleaseIfTrapped(HealthSystem player)
     {
-        if (!isPlayerTrapped || trappedPlayer == null)
+        if (!isPlayerTrapped.Value || trappedPlayer == null)
         {
-            isPlayerTrapped = false;
+            isPlayerTrapped.Value = false;
             trappedPlayer = null;
             return;
         }
