@@ -284,7 +284,13 @@ public class MazeGenerator : NetworkBehaviour
         for (int i = 0; i < Mathf.Min(count, validHealPositions.Count); i++)
         {
             Vector2Int pos = validHealPositions[i];
-            Vector3 worldPos = ToWorldPosition(pos);
+    
+            Vector2 randomOffset = new Vector2(
+                Random.Range(-0.2f, 0.2f),
+                Random.Range(-0.2f, 0.2f)
+            );
+    
+            Vector3 worldPos = ToWorldPosition(pos) + (Vector3)randomOffset;
 
             GameObject healItem = Instantiate(itemHealPrefab, worldPos, Quaternion.identity);
             healItem.transform.localScale = new Vector3(0.3f, 0.3f, 1f);
