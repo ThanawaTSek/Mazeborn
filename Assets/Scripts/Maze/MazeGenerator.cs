@@ -186,15 +186,12 @@ public class MazeGenerator : NetworkBehaviour
         for (int i = 0; i < Mathf.Min(count, floorPositions.Count); i++)
         {
             Vector2Int pos = floorPositions[i];
-            Vector3 worldPos = ToWorldPosition(pos);
-            
-            Debug.Log($"[BearTrap DEBUG] Spawning at Grid: {pos}, World: {worldPos}");
-            
-            GameObject debugCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            debugCube.transform.position = worldPos;
-            debugCube.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-            debugCube.GetComponent<Renderer>().material.color = Color.red;
-            
+            Vector2 randomOffset = new Vector2(
+                Random.Range(-0.2f, 0.2f),
+                Random.Range(-0.2f, 0.2f)
+            );
+            Vector3 worldPos = ToWorldPosition(pos) + (Vector3)randomOffset;
+
             GameObject trap = Instantiate(bearTrapPrefab, worldPos, Quaternion.identity);
             trap.transform.localScale = new Vector3(0.3f, 0.3f, 1f);
 
@@ -204,6 +201,7 @@ public class MazeGenerator : NetworkBehaviour
             if (netObj != null && !netObj.IsSpawned)
                 netObj.Spawn();
         }
+
     }
 
 
