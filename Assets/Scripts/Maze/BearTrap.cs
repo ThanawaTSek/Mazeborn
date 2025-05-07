@@ -120,11 +120,15 @@ public class BearTrap : NetworkBehaviour
         if (!isPlayerTrapped.Value || trappedPlayer == null) return;
         
         if (rpcParams.Receive.SenderClientId != trappedPlayer.OwnerClientId) return;
+        
+        var health = trappedPlayer.GetComponent<HealthSystem>();
+        if (health == null || health.IsDead()) return;
 
         ulong targetClientId = trappedPlayer.OwnerClientId;
         ReleasePlayer();
         HideUIClientRpc(targetClientId);
     }
+
 
 
     [ClientRpc]
@@ -138,6 +142,22 @@ public class BearTrap : NetworkBehaviour
         var health = localPlayerObj?.GetComponent<HealthSystem>();
         health?.HideEscapeUI();
     }
+    
+    [ClientRpc]
+    public void StopEscapeRoutineClientRpc(ulong targetClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId != targetClientId) return;
+
+        StopAllCoroutines();
+
+        var player = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+        var movement = player?.GetComponent<PlayerMovement>();
+        var health = player?.GetComponent<HealthSystem>();
+
+        movement?.SetMovementLocked(false);
+        health?.HideEscapeUI();
+    }
+
 
 
     private void ReleasePlayer()
@@ -178,4 +198,18 @@ public class BearTrap : NetworkBehaviour
             HideUIClientRpc(targetClientId);
         }
     }
+    
+    public void ClearTrapReferenceIfMatched(HealthSystem player)
+    {
+        if (trappedPlayer == null || !isPlayerTrapped.Value) return;
+
+        var health = trappedPlayer.GetComponent<HealthSystem>();
+        if (health == player)
+        {
+            StopAllCoroutines();
+            trappedPlayer = null;
+            isPlayerTrapped.Value = false;
+        }
+    }
+
 }

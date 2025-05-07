@@ -141,8 +141,11 @@ public class HealthSystem : NetworkBehaviour
         BearTrap[] traps = FindObjectsOfType<BearTrap>();
         foreach (BearTrap trap in traps)
         {
-            trap.ForceReleaseIfTrapped(this);
+            trap.ClearTrapReferenceIfMatched(this); // <- ล้าง Server-side reference
+            trap.ForceReleaseIfTrapped(this);       // <- ล้างฝั่ง client
+            trap.StopEscapeRoutineClientRpc(OwnerClientId); // <- หยุด Coroutine ฝั่ง Client
         }
+
     }
 
     [ClientRpc]
