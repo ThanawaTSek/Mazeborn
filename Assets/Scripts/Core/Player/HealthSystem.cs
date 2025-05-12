@@ -53,11 +53,13 @@ public class HealthSystem : NetworkBehaviour
         Debug.Log($"[HealthSystem] OnNetworkSpawn -> Owner: {OwnerClientId}, Local: {NetworkManager.Singleton.LocalClientId}, IsOwner = {IsOwner}");
     }
 
-    private void OnDestroy()
+    protected new void OnDestroy()
     {
+        base.OnDestroy();
         if (IsSpawned)
             currentHealth.OnValueChanged -= OnHealthChanged;
     }
+
 
     private void OnHealthChanged(int oldValue, int newValue)
     {
@@ -65,7 +67,7 @@ public class HealthSystem : NetworkBehaviour
         UpdateHealthUI();
     }
 
-    void Update()
+    /*void Update()
     {
         if (!IsOwner) return;
 
@@ -78,7 +80,7 @@ public class HealthSystem : NetworkBehaviour
         {
             Heal(1);
         }
-    }
+    }*/
 
     public void TakeDamage(int amount)
     {
