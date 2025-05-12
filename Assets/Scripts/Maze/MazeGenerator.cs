@@ -11,6 +11,9 @@ public class MazeGenerator : NetworkBehaviour
     [Header("Background")]
     public GameObject backgroundPrefab;
     
+    [Header("Special Walls")]
+    public GameObject damageWallPrefab;
+    
     [Header("Items")]
     public GameObject itemHealPrefab;
     public GameObject itemFlashLightPrefab;
@@ -34,6 +37,7 @@ public class MazeGenerator : NetworkBehaviour
             SpawnBearTraps(10);
             SpawnHealItems(10);
             SpawnFlashlights(10);
+            SpawnDamageWalls(10);
         }
     }
     
@@ -347,6 +351,50 @@ public class MazeGenerator : NetworkBehaviour
         if (netObj != null && !netObj.IsSpawned)
             netObj.Spawn();
     }
+    
+    private void SpawnDamageWalls(int count = 10)
+    {
+        if (!IsServer || damageWallPrefab == null) return;
+
+        List<Vector2Int> candidatePositions = new List<Vector2Int>();
+
+        for (int x = 1; x < width - 1; x++)
+        for (int y = 1; y < height - 1; y++)
+        {
+            if (maze[x, y] != 1) continue;
+
+            int adjacentFloors = 0;
+            foreach (Vector2Int dir in directions)
+            {
+                int nx = x + dir.x;
+                int ny = y + dir.y;
+                if (maze[nx, ny] == 0) adjacentFloors++;
+            }
+
+            if (adjacentFloors > 0)
+                candidatePositions.Add(new Vector2Int(x, y));
+        }
+
+        ShuffleList(candidatePositions);
+
+        for (int i = 0; i < Mathf.Min(count, candidatePositions.Count); i++)
+        {
+            Vector2Int pos = candidatePositions[i];
+            Vector3 worldPos = ToWorldPosition(pos);
+            
+            DestroyIfExists(pos);
+            
+            GameObject dmgWall = Instantiate(damageWallPrefab, worldPos, Quaternion.identity);
+            dmgWall.transform.localScale = Vector3.one;
+
+            tileObjects[pos] = dmgWall;
+
+            NetworkObject netObj = dmgWall.GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.IsSpawned)
+                netObj.Spawn();
+        }
+    }
+
     
     private void OnDrawGizmos()
     {

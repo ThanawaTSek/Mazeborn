@@ -17,7 +17,7 @@ public class NetworkServer : IDisposable
     {
         this.networkManager = networkManager;
 
-        networkManager.ConnectionApprovalCallback += ApprovalCheck;
+        networkManager.ConnectionApprovalCallback = ApprovalCheck;
         networkManager.OnServerStarted += OnNetworkReady;
     }
 
