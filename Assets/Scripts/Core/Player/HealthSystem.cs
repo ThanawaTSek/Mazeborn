@@ -20,6 +20,9 @@ public class HealthSystem : NetworkBehaviour
     [Header("Escape UI")]
     [SerializeField] private TextMeshProUGUI escapeText;
     [SerializeField] private Slider escapeProgressBar;
+    
+    [Header("Sound")]
+    [SerializeField] private AudioClip damageSound;
 
     private Vector3 initialPosition;
 
@@ -94,6 +97,8 @@ public class HealthSystem : NetworkBehaviour
         if (currentHealth.Value < 0) currentHealth.Value = 0;
 
         Debug.Log($"[HealthSystem] {OwnerClientId} took {amount} damage. Remaining: {currentHealth.Value}");
+
+        PlayDamageSoundClientRpc();
 
         if (currentHealth.Value == 0)
         {
@@ -190,5 +195,12 @@ public class HealthSystem : NetworkBehaviour
 
         if (escapeProgressBar != null)
             escapeProgressBar.value = value;
+    }
+    
+    [ClientRpc]
+    private void PlayDamageSoundClientRpc()
+    {
+        if (!IsOwner) return;
+        AudioSource.PlayClipAtPoint(damageSound, transform.position);
     }
 }

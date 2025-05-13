@@ -441,6 +441,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 6199496442851529623}
   normalSpeed: 1.8
   sprintSpeed: 3
+  footstepClip: {fileID: 8300000, guid: cc3e5d38f82117643b03fd29b5e32a2e, type: 3}
 --- !u!114 &4610022434632418354
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -558,6 +559,7 @@ MonoBehaviour:
   emptyHeart: {fileID: -1455096403836856330, guid: 37687077e622e4b418790d1855a27deb, type: 3}
   escapeText: {fileID: 7891740212552026910}
   escapeProgressBar: {fileID: 1907314091051044325}
+  damageSound: {fileID: 8300000, guid: 666b45b035d6f5c4d96f6253b79bc4b5, type: 3}
 --- !u!114 &1904477060293941596
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -630,9 +632,9 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 6a1dec0bcbd00cf4aa9e1d92567d6485, type: 3}
-  m_Resource: {fileID: 8300000, guid: 6a1dec0bcbd00cf4aa9e1d92567d6485, type: 3}
-  m_PlayOnAwake: 1
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 1

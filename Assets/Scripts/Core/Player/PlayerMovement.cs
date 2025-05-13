@@ -16,6 +16,10 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private float normalSpeed = 5f;
     [SerializeField] private float sprintSpeed = 10f;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip footstepClip;
+
+    private AudioSource audioSource;
     private Vector2 movementInput;
     private float currentSpeed;
 
@@ -28,6 +32,14 @@ public class PlayerMovement : NetworkBehaviour
     private void Awake()
     {
         currentSpeed = normalSpeed;
+        audioSource = GetComponent<AudioSource>();
+
+        if (audioSource != null)
+        {
+            audioSource.loop = true;
+            audioSource.playOnAwake = false;
+            audioSource.clip = footstepClip;
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -77,10 +89,17 @@ public class PlayerMovement : NetworkBehaviour
         spriteRenderer.flipX = isFacingLeft.Value;
         animator.SetBool("IsMoving", isMoving.Value);
 
-        // Local input controls
-        if (IsOwner)
+        if (!IsOwner) return;
+
+        isMoving.Value = movementInput.magnitude == 1;
+
+        if (movementInput.magnitude > 0.1f)
         {
-            isMoving.Value = movementInput.magnitude == 1;
+            StartFootstepSound();
+        }
+        else
+        {
+            StopFootstepSound();
         }
     }
 
@@ -94,9 +113,26 @@ public class PlayerMovement : NetworkBehaviour
         currentSpeed = isSprinting ? sprintSpeed : normalSpeed;
     }
 
+    private void StartFootstepSound()
+    {
+        if (audioSource != null && !audioSource.isPlaying && footstepClip != null)
+        {
+            audioSource.Play();
+        }
+    }
+
+    public void StopFootstepSound()
+    {
+        if (audioSource != null && audioSource.isPlaying)
+        {
+            audioSource.Stop();
+        }
+    }
+
     public void SetMovementLocked(bool isLocked)
     {
         rb.velocity = Vector2.zero;
         enabled = !isLocked;
+        StopFootstepSound();
     }
 }
